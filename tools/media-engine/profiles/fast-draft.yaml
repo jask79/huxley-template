@@ -1,0 +1,26 @@
+name: Fast Draft
+description: Quick iteration mode. 1K resolution, minimal evaluation, fast turnaround. Use for prototyping, brainstorming, and rapid exploration.
+
+generation:
+  resolution: 1K
+
+refinement:
+  max_iterations: 2
+  quality_threshold: 0.60
+  regression_cutoff: false
+
+consistency:
+  reference_images: 2
+  style_weight: 0.4
+
+variants:
+  variation_strength: 0.5
+
+output:
+  formats:
+    - png
+
+provenance:
+  enabled: false
+  log_eval_scores: false
+  snapshot_config: false

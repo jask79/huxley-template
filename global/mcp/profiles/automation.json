@@ -1,0 +1,6 @@
+{
+  "extends": "default",
+  "servers": [
+    {"name": "n8n"}
+  ]
+}

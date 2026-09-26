@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mesh-coordinator": {
+      "command": "node",
+      "args": ["{{CATALYST_ROOT}}/tools/mesh-coordinator/dist/index.js"],
+      "env": {
+        "CATALYST_QUALITY_DB": "{{CATALYST_ROOT}}/monitoring/quality.db"
+      }
+    }
+  }
+}

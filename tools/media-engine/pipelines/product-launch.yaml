@@ -1,0 +1,20 @@
+name: Product Launch Pipeline
+description: >
+  Full product launch media pipeline: generate a hero product image,
+  create social media variants, and produce a promotional video.
+
+steps:
+  - name: hero_image
+    workflow: product-photography
+    prompt: "{base_prompt}"
+
+  - name: social_variants
+    workflow: social-content
+    prompt: "Social media variant of the product"
+    input_from: hero_image
+    count: 5
+
+  - name: promo_video
+    workflow: video-promo
+    prompt: "15 second product promo video"
+    source_image_from: hero_image

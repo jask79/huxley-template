@@ -1,0 +1,98 @@
+# Capsule-Specific Scope Mappings
+# Used by git-commit-helper to suggest appropriate scopes based on capsule context
+
+capsules:
+  # Example entries — replace with your own capsules (one key per capsule slug).
+  example-social-capsule:
+    description: "Example: social-media growth automation"
+    scopes:
+      - name: scraper
+        description: "Scraping and data collection"
+        patterns: ["scraper/", "api_client"]
+      - name: content
+        description: "Content generation and management"
+        patterns: ["content/", "generator"]
+      - name: posting
+        description: "Post scheduling and automation"
+        patterns: ["posting/", "scheduler"]
+      - name: engagement
+        description: "Likes, comments, follows automation"
+        patterns: ["engagement/", "interactions"]
+
+  example-web-capsule:
+    description: "Example: e-commerce storefront"
+    scopes:
+      - name: products
+        description: "Product catalog and management"
+        patterns: ["products/", "catalog"]
+      - name: checkout
+        description: "Shopping cart and payment flow"
+        patterns: ["checkout/", "cart", "payment"]
+      - name: inventory
+        description: "Stock and inventory management"
+        patterns: ["inventory/", "stock"]
+      - name: shipping
+        description: "Order fulfillment and shipping"
+        patterns: ["shipping/", "orders", "fulfillment"]
+
+# Huxley System (when working in root or /tools, /global, etc.)
+system:
+  description: "Huxley core system"
+  scopes:
+    - name: agents
+      description: "Agent definitions and configuration"
+      patterns: [".claude/agents/", "agents/"]
+    - name: skills
+      description: "Skill implementations"
+      patterns: [".claude/skills/", "skills/"]
+    - name: commands
+      description: "Slash commands"
+      patterns: [".claude/commands/", "commands/"]
+    - name: tools
+      description: "CLI tools and utilities"
+      patterns: ["tools/"]
+    - name: governance
+      description: "Governance framework and policies"
+      patterns: ["global/governance/", "governance/"]
+    - name: registry
+      description: "Agent registry and metrics"
+      patterns: ["registry/"]
+    - name: memory
+      description: "MCP memory system"
+      patterns: ["global/mcp/", "memory"]
+    - name: workflow
+      description: "Workflow engine"
+      patterns: ["src/workflow", "workflow"]
+    - name: rag
+      description: "RAG service and vector store"
+      patterns: ["global/rag/", "chroma"]
+    - name: docs
+      description: "Documentation"
+      patterns: ["global/docs/", "docs/", "*.md"]
+    - name: mcp
+      description: "MCP server configurations"
+      patterns: ["mcp_", "mcp.json", "playwright-mcp"]
+
+# Generic scopes (fallback when no capsule-specific scope fits)
+generic:
+  scopes:
+    - name: core
+      description: "Core functionality"
+    - name: api
+      description: "API layer"
+    - name: ui
+      description: "User interface"
+    - name: db
+      description: "Database"
+    - name: auth
+      description: "Authentication and authorization"
+    - name: config
+      description: "Configuration"
+    - name: deps
+      description: "Dependencies"
+    - name: tests
+      description: "Testing infrastructure"
+    - name: ci
+      description: "CI/CD pipeline"
+    - name: build
+      description: "Build system"

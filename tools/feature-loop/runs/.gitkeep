@@ -1,0 +1,14 @@
+# Feature Loop Run Directory
+#
+# This directory stores runtime state for feature loop executions.
+# Each run creates a subdirectory named after the feature branch.
+#
+# Directory structure per run:
+# runs/feature-branch-name/
+# ├── progress.log              - Append-only iteration log
+# ├── prd-snapshot.json         - PRD state at loop start
+# ├── iteration-1-output.txt    - Full Claude output from iteration 1
+# ├── iteration-2-output.txt    - Full Claude output from iteration 2
+# └── ...
+#
+# These directories are ephemeral and can be cleaned up after loops complete.

@@ -1,0 +1,67 @@
+# AI Concept to Vector Pipeline
+#
+# Generates an AI concept image, then traces it to clean SVG vectors
+# using VTracer. Includes quality gate and post-processing.
+#
+# Usage:
+#   python3 tools/media-engine/cli.py pipeline \
+#     --config pipelines/ai-to-vector.yaml \
+#     --prompt "geometric tech pattern with circuit board motifs"
+#
+# Requires: pip3 install vtracer
+
+name: AI Concept to Vector
+description: Generate AI concept image, then trace to clean SVG vectors
+media_type: vector
+pipeline_type: ai_to_vector
+
+# Step 1: AI generates concept image
+source:
+  workflow: social-content
+  model: google/gemini-2.5-flash-image
+  resolution: 2K
+  aspect_ratios: ["1:1"]
+  max_iterations: 2
+
+# Step 2: VTracer tracing parameters
+trace:
+  mode: polygon
+  quality: balanced
+  color_precision: 6
+  filter_speckle: 4
+  corner_threshold: 60
+  length_threshold: 4.0
+  max_iterations: 10
+  splice_threshold: 45
+  path_precision: 3
+
+# Step 3: Quality gate thresholds
+quality_gate:
+  max_paths: 500
+  max_file_size_kb: 500
+  max_colors: 64
+  retry_on_fail: true
+  max_retries: 3
+
+# Output configuration
+output:
+  formats:
+    - svg
+    - pdf
+    - png
+  directory: "generated-media/{date}/"
+  naming: "ai-to-vector-{sequence}"
+
+# Refinement mode
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.75
+
+# Auth (for concept image generation)
+auth: openrouter
+auth_provider: openrouter
+
+# Provenance tracking
+provenance:
+  enabled: true

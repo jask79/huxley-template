@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "description": "CI/CD compatible MCP configuration - excludes platform-specific servers",
+  "environment": "ci",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${GITHUB_WORKSPACE:-/workspace}", "/tmp"],
+      "env": {}
+    },
+    "builder-memory": {
+      "command": "npx", 
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_STORE": "/tmp/mcp-memory.json"
+      }
+    },
+    "github-builder": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_MCP_PAT}"
+      }
+    },
+    "git-mcp": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://gitmcp.io/idosal/git-mcp"],
+      "env": {}
+    }
+  },
+  "excluded_servers": {
+    "reason": "Platform-specific - not available in CI",
+    "servers": ["applescript", "iterm-mcp", "siri-shortcuts", "apple-doc-mcp"]
+  },
+  "security": {
+    "filesystem": {
+      "allowedDirectories": ["${GITHUB_WORKSPACE:-/workspace}", "/tmp"],
+      "readOnly": true
+    },
+    "github-builder": {
+      "mode": "read",
+      "rateLimits": {
+        "enabled": true,
+        "requestsPerHour": 500
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "yt-thumbnail",
+  "description": "Generic 1280x720 YouTube thumbnail with background image, optional logo, and centered title.",
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "dpi": 72,
+    "colorMode": "RGB",
+    "backgroundColor": [12, 12, 18]
+  },
+  "layers": [
+    {
+      "type": "image",
+      "source": "{params.background_image}",
+      "fit": "fill"
+    },
+    {
+      "type": "text",
+      "content": "{params.title}",
+      "fontName": "Helvetica-Bold",
+      "fontSize": 96,
+      "color": [255, 255, 255],
+      "alignment": "CENTER",
+      "x": 640,
+      "y": 360
+    }
+  ],
+  "export": [
+    {
+      "preset": "yt-thumbnail",
+      "filename": "{params.slug}-thumb"
+    }
+  ]
+}

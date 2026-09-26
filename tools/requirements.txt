@@ -1,0 +1,15 @@
+# Huxley Tools Dependencies
+# setup.sh installs this file into .venv — the shipped tools and
+# LaunchAgents run .venv/bin/python3 (see tools/hooks/lib/hook_utils.py).
+
+# HTTP requests - used across tools/ for API integrations
+requests>=2.32.0
+
+# HTTPCloak - Browser TLS/HTTP fingerprint mimicking for anti-detection
+# Used by Bowser agent for API requests that need browser-like fingerprints
+httpcloak>=1.5.0
+
+# YAML - the framework's own config format (capsule specs, registries,
+# taxonomy). The capsule/spec pipeline (generate_claude_md.py,
+# validate_specs.py, task_manager.py, ...) imports it at module level.
+PyYAML>=6.0

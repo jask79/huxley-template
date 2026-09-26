@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode - Shapedream palette */
+    --background: 0 0% 96%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 217 91% 60%; /* Blue #3b82f6 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 16% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 330 81% 60%; /* Rose #ec4899 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark mode - Shapedream dark palette */
+    --background: 0 0% 6%; /* #0f0f0f */
+    --foreground: 0 0% 90%; /* #e5e5e5 */
+    --card: 0 0% 10%; /* #1a1a1a */
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 217 91% 60%; /* Blue #3b82f6 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 16% 30%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 215 16% 65%;
+    --accent: 330 81% 60%; /* Rose #ec4899 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 90%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Animated Gradient Text */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animated-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6,
+    #ec4899,
+    #8b5cf6,
+    #3b82f6
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 15s ease-in-out infinite;
+}
+
+/* Retro Grid Animation */
+@keyframes grid {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-grid {
+  animation: grid 15s linear infinite;
+}

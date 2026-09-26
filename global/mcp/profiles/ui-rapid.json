@@ -1,0 +1,10 @@
+{
+  "extends": "webdev",
+  "description": "Rapid UI prototyping with daisyUI and utility libraries",
+  "servers": [
+    {"name": "shadcn-ui"},
+    {"name": "daisyui"},
+    {"name": "magicui"}
+  ],
+  "ui_pack": "rapid-prototype"
+}

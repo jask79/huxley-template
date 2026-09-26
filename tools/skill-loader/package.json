@@ -1,0 +1,52 @@
+{
+  "name": "@catalyst/skill-loader",
+  "version": "1.0.0",
+  "description": "Progressive disclosure skill loader for Huxley agents with context-aware filtering and installer specs",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "skill-loader": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "oxlint src/",
+    "clean": "rm -rf dist",
+    "cli": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "catalyst",
+    "skills",
+    "progressive-disclosure",
+    "agent",
+    "loader"
+  ],
+  "author": "Huxley",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

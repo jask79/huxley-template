@@ -1,0 +1,34 @@
+# Domain Registry — EXAMPLE
+# Central source of truth for all of your domains across registrars.
+# Copy to domain-registry.yaml and replace the example entries with your own.
+#
+# Field reference:
+#   registrar:   godaddy | namecheap | cloudflare | njalla | external | ...
+#   dns:         Where DNS is hosted (registrar name, cloudflare, vercel, ...)
+#   hosting:     Where the site is deployed (vercel, cloudflare, netlify, ...)
+#   capsule:     Capsule name this domain belongs to (or n/a)
+#   purpose:     Human-readable description
+#   expires:     YYYY-MM-DD or unknown
+#   status:      active | redirect | parked | expired
+#   auto_renew:  true | false (optional)
+#   locked:      true | false (optional, registrar transfer lock)
+
+example.com:
+  registrar: namecheap
+  dns: cloudflare
+  hosting: vercel
+  capsule: example-capsule
+  purpose: "EXAMPLE — primary domain for your first capsule (replace me)"
+  expires: 2027-01-01
+  status: active
+  auto_renew: true
+  locked: false
+
+example.org:
+  registrar: godaddy
+  dns: godaddy
+  hosting: vercel
+  capsule: n/a
+  purpose: "EXAMPLE — secondary domain, 301 redirects to example.com (replace me)"
+  expires: 2027-06-01
+  status: redirect

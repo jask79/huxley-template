@@ -1,0 +1,22 @@
+{
+  "cmd": "{{HOME_DIR}}/.bun/bin/claude",
+  "args": [
+    "--agent",
+    "planner",
+    "--project"
+  ],
+  "env": {
+    "ANTHROPIC_LOG": "info"
+  },
+  "timeout_sec": 900,
+  "fallback_to_marker": true,
+  "auto_executor": {
+    "enabled": true,
+    "cmd": "{{HOME_DIR}}/.bun/bin/claude",
+    "args": [
+      "--agent",
+      "executor",
+      "--project"
+    ]
+  }
+}

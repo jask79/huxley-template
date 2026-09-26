@@ -1,0 +1,73 @@
+# Trace Icon Workflow
+#
+# Optimized for tracing AI-generated icons to clean vectors.
+# Uses geometric preset: sharp corners, low colors, strict quality gate.
+#
+# Usage:
+#   python3 tools/media-engine/cli.py generate \
+#     --workflow trace-icon \
+#     --prompt "minimalist home icon with clean lines"
+#
+# Requires: pip3 install vtracer
+
+name: AI-Traced Icon
+description: Generate AI concept and trace to clean icon SVG
+media_type: vector
+pipeline_type: ai_to_vector
+auth: openrouter
+auth_provider: openrouter
+
+# AI concept generation
+source:
+  model: google/gemini-2.5-flash-image
+  resolution: 1K
+  aspect_ratios: ["1:1"]
+  max_iterations: 1
+
+# VTracer parameters - geometric preset for icons
+trace:
+  mode: polygon
+  quality: geometric
+  color_precision: 4
+  filter_speckle: 6
+  corner_threshold: 90
+  length_threshold: 6.0
+  max_iterations: 10
+  splice_threshold: 60
+  path_precision: 2
+
+# Strict quality gate for icon output
+quality_gate:
+  max_paths: 150
+  max_file_size_kb: 100
+  max_colors: 8
+  retry_on_fail: true
+  max_retries: 3
+
+# Vector configuration for export
+vector:
+  type: traced
+  icon_style: line
+  grid_size: "24x24"
+  export_formats:
+    - svg
+    - pdf
+    - png
+  file_size_limit_kb: 100
+  max_path_count: 150
+
+output:
+  formats:
+    - svg
+    - pdf
+    - png
+  directory: "generated-media/{date}/"
+  naming: "traced-icon-{sequence}"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.80
+
+provenance:
+  enabled: true

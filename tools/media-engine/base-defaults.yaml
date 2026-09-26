@@ -1,0 +1,141 @@
+# Huxley Media Workflow Engine — Base Defaults
+#
+# This engine is media-type agnostic. It orchestrates workflows for any media
+# format: image, video, vector, 3D rendering, video editing, and future types.
+# Each media_type activates its own validation rules and generation backend.
+#
+# Supported: image | video | vector | 3d-render | video-edit
+
+name: base-defaults
+media_type: image
+model: google/gemini-3-pro-image-preview
+auth: openrouter
+auth_provider: openrouter
+
+generation:
+  resolution: 2K
+  aspect_ratios: ["1:1"]
+
+refinement:
+  mode: autonomous
+  max_iterations: 3
+  quality_threshold: 0.75
+  regression_cutoff: true
+  evaluate_criteria:
+    - overall_quality
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - resolution_match
+
+consistency:
+  reference_images: 0
+  style_weight: 0.5
+  character_lock: false
+
+variants:
+  count: 1
+  variation_strength: 0.3
+
+output:
+  directory: "generated-media/{date}/"
+  naming: "{workflow}-{sequence}"
+  formats: ["png"]
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+# Vector-specific defaults (used when media_type: vector)
+vector:
+  stroke_weight: 2
+  corner_radius: 0
+  grid_size: "24x24"
+  icon_style: "line"
+  export_formats:
+    - svg
+    - pdf
+    - png
+  file_size_limit_kb: 100
+  max_path_count: 500
+  # Phase 3: Print production defaults (requires Inkscape for full features)
+  print:
+    print_ready: false
+    bleed_mm: 3.0
+    cmyk: false
+    text_to_path: false
+    color_profile: null
+
+# Phase 4: VTracer trace defaults (used when vector.type: traced or pipeline_type: ai_to_vector)
+trace:
+  mode: polygon
+  quality: balanced
+  color_precision: 6
+  filter_speckle: 4
+  corner_threshold: 60
+  length_threshold: 4.0
+  max_iterations: 10
+  splice_threshold: 45
+  path_precision: 3
+
+# 3D render defaults (used when media_type: 3d-render)
+# Requires Blender: /Applications/Blender.app/Contents/MacOS/Blender
+# Agent: 3D Developer
+three_d:
+  render_engine: cycles       # cycles | eevee
+  samples: 128
+  device: gpu                 # gpu | cpu
+  resolution_x: 1920
+  resolution_y: 1080
+  film_transparent: false
+  output_format: png          # png | exr | jpg
+  denoising: true
+
+# Video edit defaults (used when media_type: video-edit)
+# Requires DaVinci Resolve running
+# Agent: Studio Engineer
+video_edit:
+  timeline_resolution: "1920x1080"
+  timeline_fps: 24
+  color_space: "Rec.709"
+  render_codec: "H264"
+  render_format: "mp4"
+
+# Phase 4: Quality gate defaults for traced vectors
+quality_gate:
+  max_paths: 500
+  max_file_size_kb: 500
+  max_colors: 64
+  retry_on_fail: true
+  max_retries: 3
+
+# Transcode defaults (PyAV — used by transcode-web, transcode-archive workflows)
+transcode:
+  codec: h264
+  crf: 23
+  preset: medium
+  audio_codec: aac
+  pixel_format: yuv420p
+  bitrate: null          # null = use CRF mode (preferred)
+
+# Timeline defaults (OTIO — used by video-edit-basic, video-edit-social workflows)
+timeline:
+  fps: 24.0
+  transition_type: dissolve
+  transition_duration: 0.5
+  export_formats:
+    - otio
+    - fcpxml
+  video_tracks: 1
+  audio_tracks: 1
+
+# Render defaults (MLT — headless timeline rendering)
+render:
+  enabled: true
+  codec: h264
+  resolution: "1920x1080"
+  bitrate: "8M"
+  quality: 23
+  fps: 24
+  audio_codec: aac

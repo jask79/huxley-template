@@ -1,0 +1,39 @@
+{
+  "_comment": "Canonical brand configuration consumed by the Brand Specialist agent. Copy to global/config/brand-dna.json and fill in your brand. Capsule-level brand files may declare {\"inherits_from\": \"global/config/brand-dna.json\"} and override sections.",
+  "brand": {
+    "name": "Your Brand",
+    "tagline": "One line on what the brand promises",
+    "voice": ["clear", "confident", "human"],
+    "tone_rules": [
+      "Plain language over jargon",
+      "Short sentences; active voice",
+      "No hype words unless the claim is verifiable"
+    ]
+  },
+  "colors": {
+    "primary": "#1A1A2E",
+    "secondary": "#16213E",
+    "accent": "#0F969C",
+    "background": "#FFFFFF",
+    "text": "#111111",
+    "usage_notes": "Accent for CTAs only; keep body text on background at WCAG AA contrast or better"
+  },
+  "typography": {
+    "heading": {"family": "Inter", "weights": ["600", "700"]},
+    "body": {"family": "Inter", "weights": ["400", "500"]},
+    "mono": {"family": "JetBrains Mono", "weights": ["400"]},
+    "scale": {"base_px": 16, "ratio": 1.25}
+  },
+  "iconography": {
+    "style": "SF Symbols (iOS), Heroicons (web)",
+    "weights": ["regular", "medium", "semibold"],
+    "naming": "kebab-case"
+  },
+  "logo": {
+    "primary": "assets/logo.svg",
+    "clear_space": "1x logo height on all sides",
+    "min_size_px": 24,
+    "do_not": ["stretch", "recolor outside palette", "place on low-contrast backgrounds"]
+  },
+  "capsule_overrides": {}
+}

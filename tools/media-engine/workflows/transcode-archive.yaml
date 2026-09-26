@@ -1,0 +1,41 @@
+name: Transcode Archive
+media_type: video
+model: local
+auth: local
+auth_provider: local
+profile: high-fidelity
+
+# Archival transcoding: H.265, CRF 18 (near-lossless), slow preset, FLAC audio
+# Maximum quality preservation for long-term storage.
+# Uses PyAV (FFmpeg) locally — no API calls, no cost.
+
+generation:
+  resolution: 4K
+  aspect_ratios:
+    - "16:9"
+
+transcode:
+  codec: h265
+  audio_codec: flac
+  crf: 18
+  preset: slow
+
+refinement:
+  mode: autonomous
+  max_iterations: 1
+  quality_threshold: 0.95
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - not_corrupted
+
+output:
+  directory: "generated-media/{date}/archive/"
+  naming: "{workflow}-{sequence}-archive"
+  formats:
+    - mkv
+
+provenance:
+  enabled: true
+  log_eval_scores: false
+  snapshot_config: true

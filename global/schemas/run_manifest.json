@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Huxley Run Manifest Schema",
+  "description": "Standardized schema for Huxley capsule run artifacts",
+  "type": "object",
+  "required": [
+    "run_id",
+    "capsule",
+    "execution",
+    "schema_version"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for compatibility"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "Unique identifier for this run"
+    },
+    "capsule": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Capsule name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Capsule version"
+        },
+        "path": {
+          "type": "string",
+          "description": "Capsule directory path"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": ["started_at"],
+      "properties": {
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 execution start time"
+        },
+        "ended_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 execution end time"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Execution duration in milliseconds"
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Process exit code"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["running", "completed", "failed", "cancelled", "timeout"],
+          "description": "Execution status"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "object",
+          "properties": {
+            "platform": { "type": "string" },
+            "python_version": { "type": "string" },
+            "node_version": { "type": "string" },
+            "builder_version": { "type": "string" }
+          }
+        },
+        "variables": {
+          "type": "object",
+          "description": "Selected environment variables (no secrets)"
+        },
+        "working_directory": {
+          "type": "string",
+          "description": "Execution working directory"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "object",
+          "description": "Input parameters passed to execution"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "hash"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "size": { "type": "integer" },
+              "modified": { "type": "string", "format": "date-time" }
+            }
+          },
+          "description": "Input files with integrity hashes"
+        },
+        "dependencies": {
+          "type": "object",
+          "properties": {
+            "python_packages": {
+              "type": "object",
+              "description": "Python package versions"
+            },
+            "npm_packages": {
+              "type": "object", 
+              "description": "NPM package versions"
+            },
+            "system_dependencies": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "System-level dependencies"
+            }
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "type"],
+            "properties": {
+              "path": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["log", "data", "config", "binary", "report", "other"]
+              },
+              "hash": { "type": "string" },
+              "size": { "type": "integer" },
+              "description": { "type": "string" }
+            }
+          },
+          "description": "Generated artifacts"
+        },
+        "logs": {
+          "type": "object",
+          "properties": {
+            "stdout_path": { "type": "string" },
+            "stderr_path": { "type": "string" },
+            "combined_path": { "type": "string" },
+            "structured_logs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "level": { "type": "string" },
+                  "message": { "type": "string" },
+                  "source": { "type": "string" },
+                  "data": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "cpu_usage_percent": { "type": "number" },
+            "memory_peak_mb": { "type": "number" },
+            "disk_io_mb": { "type": "number" },
+            "network_io_mb": { "type": "number" },
+            "custom_metrics": { "type": "object" }
+          }
+        }
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "properties": {
+        "random_seed": {
+          "type": ["integer", "null"],
+          "description": "Random seed for deterministic execution"
+        },
+        "git_commit": {
+          "type": ["string", "null"],
+          "description": "Git commit hash at execution time"
+        },
+        "builder_checksum": {
+          "type": ["string", "null"],
+          "description": "Checksum of Huxley state"
+        },
+        "replay_command": {
+          "type": ["string", "null"],
+          "description": "Command to replay this exact execution"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "dod_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "status"],
+            "properties": {
+              "name": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["passed", "failed", "skipped", "warning"]
+              },
+              "message": { "type": "string" },
+              "details": { "type": "object" }
+            }
+          }
+        },
+        "test_results": {
+          "type": "object",
+          "properties": {
+            "total": { "type": "integer" },
+            "passed": { "type": "integer" },
+            "failed": { "type": "integer" },
+            "skipped": { "type": "integer" },
+            "coverage_percent": { "type": "number" }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_by": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" },
+        "related_runs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

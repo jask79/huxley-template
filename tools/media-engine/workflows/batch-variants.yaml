@@ -1,0 +1,37 @@
+name: Batch Variants
+media_type: image
+model: google/gemini-3-pro-image-preview
+profile: batch-production
+
+generation:
+  resolution: 2K
+  aspect_ratios: ["1:1", "16:9", "9:16"]
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.65
+  evaluate_criteria:
+    - overall_quality
+    - variation_diversity
+  hard_checks:
+    - file_exists
+    - file_not_empty
+
+consistency:
+  reference_images: 4
+  style_weight: 0.6
+
+variants:
+  count: 10
+  variation_strength: 0.4
+
+output:
+  directory: "generated-media/{date}/variants/"
+  naming: "{workflow}-{sequence}"
+  formats: ["png", "webp"]
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

@@ -1,0 +1,140 @@
+{
+  "feature": "User Authentication with JWT",
+  "branch": "feature/user-auth",
+  "maxIterations": 10,
+  "governance": {
+    "requireValidation": true,
+    "notifyOnComplete": true,
+    "costAlertThreshold": 5
+  },
+  "tasks": [
+    {
+      "id": "AUTH-001",
+      "title": "Implement JWT token generation endpoint",
+      "description": "Create a FastAPI endpoint at POST /auth/login that accepts username and password, validates credentials against Supabase users table, and returns JWT access token and refresh token. Use RS256 algorithm for signing. Access tokens expire in 15 minutes, refresh tokens in 7 days. Store refresh tokens in Redis with automatic expiry.",
+      "specialist": "Backend Dev",
+      "priority": 1,
+      "acceptanceCriteria": [
+        "Endpoint accepts username and password in request body",
+        "Returns valid JWT access token on successful authentication",
+        "Returns refresh token in response payload",
+        "Access tokens expire after 15 minutes",
+        "Refresh tokens expire after 7 days",
+        "Invalid credentials return 401 status code",
+        "Refresh tokens stored in Redis with TTL"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-002",
+      "title": "Implement token refresh endpoint",
+      "description": "Create POST /auth/refresh endpoint that accepts a refresh token, validates it against Redis, and returns a new access token. Invalidate the old refresh token and issue a new one (refresh token rotation). Handle expired/invalid refresh tokens gracefully.",
+      "specialist": "Backend Dev",
+      "priority": 2,
+      "acceptanceCriteria": [
+        "Endpoint accepts refresh token in request body",
+        "Returns new access token if refresh token valid",
+        "Issues new refresh token (rotation)",
+        "Invalidates old refresh token in Redis",
+        "Returns 401 for expired or invalid refresh tokens",
+        "New refresh token stored in Redis with TTL"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-003",
+      "title": "Create login form component",
+      "description": "Build a React login form component using shadcn/ui form components. Include fields for username and password, client-side validation, and error display. On submit, call the /auth/login endpoint and store tokens in httpOnly cookies. Display loading state during authentication.",
+      "specialist": "Frontend Dev",
+      "priority": 3,
+      "acceptanceCriteria": [
+        "Form includes username and password fields",
+        "Client-side validation for required fields",
+        "Submits credentials to /auth/login endpoint",
+        "Stores access and refresh tokens in httpOnly cookies",
+        "Shows loading spinner during authentication",
+        "Displays error messages for failed login",
+        "Redirects to dashboard on successful login"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-004",
+      "title": "Implement authentication middleware",
+      "description": "Create FastAPI middleware that validates JWT access tokens on protected routes. Extract token from Authorization header, verify signature, check expiration, and attach user info to request context. Return 401 for missing/invalid tokens.",
+      "specialist": "Backend Dev",
+      "priority": 4,
+      "acceptanceCriteria": [
+        "Middleware extracts JWT from Authorization header",
+        "Validates token signature using RS256 public key",
+        "Checks token expiration",
+        "Attaches user info to request context for valid tokens",
+        "Returns 401 for missing tokens",
+        "Returns 401 for invalid or expired tokens",
+        "Allows requests to public routes without token"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-005",
+      "title": "Add token refresh logic to frontend",
+      "description": "Implement axios interceptor that detects 401 responses, attempts to refresh the access token using the refresh token, and retries the original request. If refresh fails, redirect to login page. Handle token refresh race conditions (multiple concurrent requests).",
+      "specialist": "Frontend Dev",
+      "priority": 5,
+      "acceptanceCriteria": [
+        "Axios interceptor detects 401 responses",
+        "Calls /auth/refresh endpoint with refresh token",
+        "Retries original request with new access token",
+        "Handles concurrent requests during refresh",
+        "Redirects to login if refresh fails",
+        "Updates httpOnly cookies with new tokens"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-006",
+      "title": "Create logout endpoint",
+      "description": "Implement POST /auth/logout endpoint that invalidates the refresh token in Redis and clears authentication cookies. Frontend should call this endpoint and redirect to login page.",
+      "specialist": "Backend Dev",
+      "priority": 6,
+      "acceptanceCriteria": [
+        "Endpoint invalidates refresh token in Redis",
+        "Returns success response",
+        "Frontend clears httpOnly cookies",
+        "Frontend redirects to login page after logout"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    },
+    {
+      "id": "AUTH-007",
+      "title": "Add comprehensive error handling and logging",
+      "description": "Implement structured logging for all authentication operations. Log successful logins, failed attempts, token refreshes, and logout events. Include user IDs, timestamps, and IP addresses. Add rate limiting to prevent brute force attacks (5 failed attempts per IP per minute).",
+      "specialist": "Backend Dev",
+      "priority": 7,
+      "acceptanceCriteria": [
+        "Structured logging for all auth operations",
+        "Logs include user ID, timestamp, IP address",
+        "Rate limiting prevents brute force (5 attempts/min)",
+        "Rate limit violations logged",
+        "Successful logins logged",
+        "Failed login attempts logged with reason",
+        "Token refresh events logged"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    }
+  ]
+}

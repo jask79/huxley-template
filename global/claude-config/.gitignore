@@ -1,0 +1,12 @@
+# Ignore environment files containing sensitive data
+.env
+.env.local
+.env.*.local
+
+# Ignore any backup files
+*.bak
+*.backup
+
+# OS generated files
+.DS_Store
+Thumbs.db

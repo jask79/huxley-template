@@ -1,0 +1,38 @@
+{
+  "name": "useSpringValue",
+  "signature": "useSpringValue(initialValue: number, config?: SpringConfig): SpringValue",
+  "description": "Creates an imperative spring value that can be animated programmatically",
+  "parameters": [
+    {
+      "name": "initialValue",
+      "type": "number",
+      "description": "Initial value for the spring"
+    },
+    {
+      "name": "config",
+      "type": "SpringConfig",
+      "description": "Optional spring physics configuration"
+    }
+  ],
+  "returns": {
+    "type": "SpringValue",
+    "description": "Spring value object with .start(), .stop(), and .set() methods"
+  },
+  "examples": [
+    {
+      "title": "Imperative animation",
+      "code": "const scale = useSpringValue(1)\n\nconst handleClick = () => {\n  scale.start(1.2, {\n    config: { tension: 300, friction: 10 }\n  })\n}\n\nreturn (\n  <animated.div\n    onClick={handleClick}\n    style={{ scale }}\n  >\n    Click me\n  </animated.div>\n)"
+    },
+    {
+      "title": "Scroll-based animation",
+      "code": "const opacity = useSpringValue(1)\n\nuseEffect(() => {\n  const handleScroll = () => {\n    const scrolled = window.scrollY\n    opacity.start(1 - scrolled / 500)\n  }\n  window.addEventListener('scroll', handleScroll)\n  return () => window.removeEventListener('scroll', handleScroll)\n}, [])"
+    }
+  ],
+  "commonPatterns": [
+    "Imperative animations",
+    "Scroll-based effects",
+    "Gesture animations",
+    "Manual control"
+  ],
+  "relatedHooks": ["useSpring", "useChain", "Controller"]
+}

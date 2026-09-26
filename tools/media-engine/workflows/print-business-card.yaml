@@ -1,0 +1,71 @@
+name: Print Business Card
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "2:3"  # Standard business card is roughly 2:3.5
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - text_clarity
+    - visual_balance
+    - print_readiness
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/print/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - pdf
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: badge  # Business cards use the badge generator (rectangular + text)
+  stroke_weight: 1.5
+  corner_radius: 0
+  icon_style: "filled"
+  file_size_limit_kb: 200
+  export_formats:
+    - svg
+    - pdf
+    - png
+    - eps
+  palette:
+    primary: "#1A1A2E"
+    secondary: "#16213E"
+    accent: "#0F3460"
+    foreground: "#FFFFFF"
+    background: "#FFFFFF"
+  # Print production settings (Phase 3)
+  print:
+    print_ready: true
+    bleed_mm: 3.175  # 0.125 inches -- standard US business card bleed
+    cmyk: true
+    text_to_path: true
+    color_profile: null  # Use default CMYK profile

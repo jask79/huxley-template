@@ -1,0 +1,306 @@
+# Infrastructure Sharp Edges
+# Production gotchas for Docker, Kubernetes, Terraform, and CI/CD
+
+edges:
+  # === CRITICAL: Docker Security ===
+
+  - id: docker_run_as_root
+    severity: critical
+    category: security
+    pattern: "Container running as root user"
+    detection:
+      - type: semantic
+        description: "Dockerfile final stage has no USER directive — container runs as root"
+    why: "Root in containers = root on host if container escapes"
+    fix: "Add USER directive with non-root user"
+    examples:
+      bad: |
+        FROM node:20-alpine
+        COPY . .
+        CMD ["node", "index.js"]
+      good: |
+        FROM node:20-alpine
+        RUN adduser -D appuser
+        COPY --chown=appuser . .
+        USER appuser
+        CMD ["node", "index.js"]
+    tags: ["docker", "privilege-escalation"]
+
+  - id: docker_latest_tag
+    severity: warning
+    category: reliability
+    pattern: "Using :latest tag in FROM directive"
+    detection:
+      - type: regex
+        value: 'FROM\s+\w+(?:/\w+)*(?::latest|\s)'
+        files: ["Dockerfile", "Dockerfile.*", "*.dockerfile"]
+    why: "latest tag is mutable — builds break when upstream pushes changes"
+    fix: "Pin to specific version or digest"
+    examples:
+      bad: |
+        FROM node:latest
+      good: |
+        FROM node:20.11-alpine3.19
+    tags: ["docker", "reproducibility"]
+
+  - id: docker_secret_in_build
+    severity: critical
+    category: security
+    pattern: "Secret passed as build argument"
+    detection:
+      - type: regex
+        value: 'ARG\s+\w*(?:SECRET|TOKEN|PASSWORD|KEY|CREDENTIAL)\w*'
+        files: ["Dockerfile", "Dockerfile.*", "*.dockerfile"]
+      - type: regex
+        value: '--build-arg\s+\w*(?:SECRET|TOKEN|PASSWORD|KEY)\w*='
+        files: ["*.yml", "*.yaml", "*.sh"]
+    why: "Build args are visible in image history and layer metadata"
+    fix: "Use Docker secrets, BuildKit --mount=type=secret, or runtime env vars"
+    tags: ["docker", "secrets"]
+
+  - id: docker_copy_all
+    severity: warning
+    category: security
+    pattern: "COPY . . present — verify .dockerignore exists"
+    detection:
+      - type: semantic
+        description: "Dockerfile uses 'COPY . .' — verify a .dockerignore file exists in the same directory excluding .env, .git, node_modules, and secrets"
+    why: "COPY . . without .dockerignore copies .env, .git, credentials, and unnecessary files into image"
+    fix: "Create .dockerignore excluding .env, .git, node_modules, secrets"
+    tags: ["docker", "secrets", "image-size"]
+
+  - id: docker_expose_all
+    severity: warning
+    category: security
+    pattern: "Docker Compose exposing port to host unnecessarily"
+    detection:
+      - type: regex
+        value: 'ports:\s*\n\s*-\s*"?\d+:\d+'
+        files: ["docker-compose*.yml", "docker-compose*.yaml"]
+    why: "Exposed ports are accessible from network, not just localhost"
+    fix: "Bind to 127.0.0.1 or use internal networks"
+    examples:
+      bad: |
+        ports:
+          - "5432:5432"
+      good: |
+        ports:
+          - "127.0.0.1:5432:5432"
+    tags: ["docker-compose", "networking"]
+
+  # === CRITICAL: Kubernetes Security ===
+
+  - id: k8s_privileged_container
+    severity: critical
+    category: security
+    pattern: "Kubernetes container running in privileged mode"
+    detection:
+      - type: regex
+        value: 'privileged:\s*true'
+        files: ["**/k8s/**/*.yaml", "**/k8s/**/*.yml", "**/kubernetes/**/*.yaml", "**/manifests/**/*.yaml", "helm/**/*.yaml"]
+    why: "Privileged containers have full host access — container escape trivial"
+    fix: "Remove privileged flag, use specific capabilities instead"
+    tags: ["kubernetes", "security"]
+
+  - id: k8s_no_resource_limits
+    severity: warning
+    category: reliability
+    pattern: "Kubernetes pod without resource limits"
+    detection:
+      - type: semantic
+        description: "Kubernetes pod spec has containers without resources.limits (CPU/memory)"
+    why: "Pods without limits can consume all node resources and cause OOM kills"
+    fix: "Set CPU and memory limits"
+    examples:
+      bad: |
+        containers:
+          - name: app
+            image: myapp:1.0
+      good: |
+        containers:
+          - name: app
+            image: myapp:1.0
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "250m"
+              limits:
+                memory: "256Mi"
+                cpu: "500m"
+    tags: ["kubernetes", "resource-management"]
+
+  - id: k8s_no_security_context
+    severity: warning
+    category: security
+    pattern: "Pod without securityContext"
+    detection:
+      - type: semantic
+        description: "Kubernetes pod spec lacks securityContext with runAsNonRoot and readOnlyRootFilesystem"
+    why: "Default security context allows privilege escalation"
+    fix: "Add securityContext with runAsNonRoot, readOnlyRootFilesystem"
+    examples:
+      good: |
+        securityContext:
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    tags: ["kubernetes", "security"]
+
+  - id: k8s_no_liveness_probe
+    severity: warning
+    category: reliability
+    pattern: "Kubernetes deployment without health probes"
+    detection:
+      - type: semantic
+        description: "Kubernetes deployment containers lack livenessProbe and/or readinessProbe"
+    why: "Without probes, K8s can't detect or recover from hung processes"
+    fix: "Add livenessProbe and readinessProbe"
+    tags: ["kubernetes", "health-checks"]
+
+  # === CRITICAL: Terraform/IaC ===
+
+  - id: terraform_hardcoded_secret
+    severity: critical
+    category: security
+    pattern: "Hardcoded secret in Terraform configuration"
+    detection:
+      - type: regex
+        value: '(?:password|secret|token|api_key)\s*=\s*"[^"]{8,}"'
+        files: ["*.tf", "*.tfvars"]
+    why: "Secrets in .tf files get committed to version control"
+    fix: "Use variables with sensitive=true, or reference secret manager"
+    examples:
+      bad: |
+        password = "mydbpassword123"
+      good: |
+        password = var.db_password  # sensitive = true in variable declaration
+    tags: ["terraform", "secrets"]
+
+  - id: terraform_no_state_backend
+    severity: warning
+    category: reliability
+    pattern: "Terraform without remote state backend"
+    detection:
+      - type: regex
+        value: 'terraform\s*\{(?![\s\S]*backend\s)'
+        files: ["*.tf"]
+    why: "Local state can be lost, prevents team collaboration, no locking"
+    fix: "Configure remote backend (S3, GCS, Terraform Cloud)"
+    tags: ["terraform", "state"]
+
+  - id: terraform_no_state_lock
+    severity: warning
+    category: reliability
+    pattern: "S3 backend without DynamoDB state locking"
+    detection:
+      - type: regex
+        value: 'backend\s+"s3"\s*\{(?![\s\S]*dynamodb_table)'
+        files: ["*.tf"]
+    why: "Without locking, concurrent applies corrupt state"
+    fix: "Add dynamodb_table for state locking"
+    tags: ["terraform", "state", "concurrency"]
+
+  # === WARNING: CI/CD ===
+
+  - id: cicd_secret_in_log
+    severity: critical
+    category: security
+    pattern: "Printing secrets in CI/CD pipeline output"
+    detection:
+      - type: regex
+        value: 'echo\s+\$\{?\w*(?:SECRET|TOKEN|PASSWORD|KEY)\w*\}?'
+        files: ["*.yml", "*.yaml", "*.sh"]
+    why: "CI logs are often accessible to all team members"
+    fix: "Never echo secrets, use masking features"
+    tags: ["ci-cd", "secrets"]
+
+  - id: cicd_no_pin_action
+    severity: warning
+    category: security
+    pattern: "GitHub Action using mutable tag"
+    detection:
+      - type: regex
+        value: 'uses:\s+[\w.-]+/[\w.-]+@(?:main|master|v\d+)\s*$'
+        files: [".github/workflows/*.yml"]
+    why: "Mutable tags can be overwritten — supply chain attack vector"
+    fix: "Pin to full SHA: uses: actions/checkout@abc123..."
+    examples:
+      bad: |
+        uses: actions/checkout@v4
+      good: |
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+    tags: ["github-actions", "supply-chain"]
+
+  - id: cicd_wildcard_permissions
+    severity: warning
+    category: security
+    pattern: "GitHub Actions workflow with write-all permissions"
+    detection:
+      - type: regex
+        value: 'permissions:\s*write-all'
+        files: [".github/workflows/*.yml"]
+    why: "Overly broad permissions increase blast radius of compromised workflows"
+    fix: "Use principle of least privilege — specify only needed permissions"
+    tags: ["github-actions", "permissions"]
+
+  # === INFO: Best Practices ===
+
+  - id: docker_no_healthcheck
+    severity: info
+    category: reliability
+    pattern: "Dockerfile without HEALTHCHECK instruction"
+    detection:
+      - type: semantic
+        description: "Dockerfile does not contain a HEALTHCHECK instruction for production container"
+    why: "Docker can't determine if container is healthy without healthcheck"
+    fix: "Add HEALTHCHECK instruction for production containers"
+    tags: ["docker", "health-checks"]
+
+  - id: docker_apt_no_clean
+    severity: info
+    category: performance
+    pattern: "apt-get install without cleanup in same RUN layer"
+    detection:
+      - type: semantic
+        description: "Dockerfile RUN layer with apt-get install does not include 'rm -rf /var/lib/apt/lists/*' in the same RUN command"
+    why: "APT cache in layers bloats image size — cleanup must be in the same RUN to reduce layer size"
+    fix: "Chain install and cleanup in single RUN: && rm -rf /var/lib/apt/lists/*"
+    tags: ["docker", "image-size"]
+
+  # === Additional Patterns (Reviewer-suggested) ===
+
+  - id: k8s_hostpath_volume
+    severity: critical
+    category: security
+    pattern: "hostPath volume mount in Kubernetes"
+    detection:
+      - type: regex
+        value: 'hostPath:\s*\n\s+path:'
+        files: ["**/k8s/**/*.yaml", "**/k8s/**/*.yml", "**/kubernetes/**/*.yaml", "**/manifests/**/*.yaml", "helm/**/*.yaml"]
+    why: "hostPath volumes allow containers to access host filesystem — privilege escalation path"
+    fix: "Use PersistentVolumeClaim, emptyDir, or ConfigMap/Secret volumes instead"
+    tags: ["kubernetes", "privilege-escalation"]
+
+  - id: terraform_public_s3_bucket
+    severity: critical
+    category: security
+    pattern: "S3 bucket with public access"
+    detection:
+      - type: regex
+        value: 'acl\s*=\s*"public-read(?:-write)?"'
+        files: ["*.tf"]
+    why: "Public S3 buckets are the #1 source of cloud data breaches"
+    fix: "Use private ACL with explicit bucket policies for controlled access"
+    tags: ["terraform", "s3", "data-exposure"]
+
+  - id: cicd_self_hosted_untrusted
+    severity: critical
+    category: security
+    pattern: "Self-hosted runner triggered by untrusted PR"
+    detection:
+      - type: regex
+        value: 'pull_request_target:[\s\S]*runs-on:\s*self-hosted'
+        files: [".github/workflows/*.yml"]
+    why: "pull_request_target + self-hosted runner = arbitrary code execution on your infrastructure from external PRs"
+    fix: "Use GitHub-hosted runners for untrusted code, or gate with approval"
+    tags: ["github-actions", "supply-chain"]

@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "description": "Huxley MCP servers - trimmed to 5 core servers for memory efficiency. Re-add others on-demand when needed.",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "{{CATALYST_ROOT}}"],
+      "description": "File system access scoped to this Huxley root (add more directory args to widen)"
+    },
+    "builder-memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "description": "Persistent memory for maintaining context across conversations"
+    },
+    "iterm-mcp": {
+      "command": "npx",
+      "args": ["-y", "iterm-mcp"],
+      "description": "iTerm2 terminal integration - interact with running processes (requires iTerm2; remove this server if you use another terminal)"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "description": "Up-to-date documentation for any library or framework"
+    },
+    "google-workspace": {
+      "command": "uvx",
+      "args": ["--from", "google-workspace-mcp", "--python", "3.12", "google-workspace-worker"],
+      "env": {
+        "GOOGLE_WORKSPACE_CLIENT_ID": "${GOOGLE_WORKSPACE_CLIENT_ID}",
+        "GOOGLE_WORKSPACE_CLIENT_SECRET": "${GOOGLE_WORKSPACE_CLIENT_SECRET}"
+      },
+      "description": "Gmail management via Google Workspace MCP (set both env vars in your shell before launching Claude Code, or remove this server if unused)"
+    }
+  }
+}

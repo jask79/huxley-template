@@ -1,0 +1,77 @@
+# Enhanced Capsule Requirements Template
+
+project:
+  name: "{{PROJECT_NAME}}"
+  slug: "{{PROJECT_SLUG}}"
+  description: "{{PROJECT_DESCRIPTION}}"
+  
+metadata:
+  quality_mode: "standard"      # Using unified quality standards
+  branch: "{{BRANCH}}"          # automation, web, app, backend, ops
+  targets: ["{{TARGETS}}"]       # Specific technologies
+  priority: "normal"
+  
+requirements:
+  core:
+    - "{{CORE_REQUIREMENT_1}}"
+    - "{{CORE_REQUIREMENT_2}}"
+    - "{{CORE_REQUIREMENT_3}}"
+    
+  functional:
+    - "{{FUNCTIONAL_REQUIREMENT_1}}"
+    - "{{FUNCTIONAL_REQUIREMENT_2}}"
+    
+  technical:
+    - "{{TECHNICAL_REQUIREMENT_1}}"
+    - "{{TECHNICAL_REQUIREMENT_2}}"
+    
+  quality:
+    - "{{QUALITY_REQUIREMENT_1}}"
+    - "{{QUALITY_REQUIREMENT_2}}"
+
+constraints:
+  technical:
+    - "{{TECHNICAL_CONSTRAINT_1}}"
+    - "{{TECHNICAL_CONSTRAINT_2}}"
+    
+  business:
+    - "{{BUSINESS_CONSTRAINT_1}}"
+    - "{{BUSINESS_CONSTRAINT_2}}"
+    
+  timeline:
+    - "{{TIMELINE_CONSTRAINT_1}}"
+    - "{{TIMELINE_CONSTRAINT_2}}"
+
+deliverables:
+  primary:
+    - "{{PRIMARY_DELIVERABLE_1}}"
+    - "{{PRIMARY_DELIVERABLE_2}}"
+    
+  secondary:
+    - "{{SECONDARY_DELIVERABLE_1}}"
+    - "{{SECONDARY_DELIVERABLE_2}}"
+    
+  documentation:
+    - "{{DOC_DELIVERABLE_1}}"
+    - "{{DOC_DELIVERABLE_2}}"
+
+success_criteria:
+  - "{{SUCCESS_CRITERION_1}}"
+  - "{{SUCCESS_CRITERION_2}}"
+  - "{{SUCCESS_CRITERION_3}}"
+
+definition_of_done:
+  # Unified quality standards will be applied
+  quality_standards:
+    - "{{QUALITY_STANDARD_1}}"
+    - "{{QUALITY_STANDARD_2}}"
+    - "{{QUALITY_STANDARD_3}}"
+
+stakeholders:
+  primary: ["{{PRIMARY_STAKEHOLDER}}"]
+  secondary: ["{{SECONDARY_STAKEHOLDER}}"]
+  
+context:
+  domain: "{{DOMAIN_CONTEXT}}"
+  background: "{{BACKGROUND_CONTEXT}}"
+  assumptions: ["{{ASSUMPTION_1}}", "{{ASSUMPTION_2}}"]

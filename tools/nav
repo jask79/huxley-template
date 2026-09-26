@@ -1,0 +1,50 @@
+#!/bin/bash
+# Catalyst Navigation Wrapper
+# Usage: source tools/nav <capsule-slug> [subdirectory]
+#
+# This must be sourced (not executed) to change the parent shell's directory:
+#   source tools/nav example-capsule portal
+#
+# Or add to ~/.zshrc:
+#   alias nav='source {{CATALYST_ROOT}}/tools/nav'
+# Then use:
+#   nav example-capsule portal
+
+CATALYST_ROOT="{{CATALYST_ROOT}}"
+NAV_SCRIPT="$CATALYST_ROOT/tools/navigate_capsule.py"
+
+if [[ $# -eq 0 ]]; then
+    echo "Usage: source tools/nav <capsule-slug> [subdirectory]"
+    echo "Example: source tools/nav example-capsule portal"
+    return 1
+fi
+
+CAPSULE_SLUG="$1"
+SUBDIR="$2"
+
+# Build command
+if [[ -n "$SUBDIR" ]]; then
+    CMD="python3 '$NAV_SCRIPT' '$CAPSULE_SLUG' --subdir '$SUBDIR'"
+else
+    CMD="python3 '$NAV_SCRIPT' '$CAPSULE_SLUG'"
+fi
+
+# Run navigation (loads MCPs)
+OUTPUT=$(eval $CMD 2>&1)
+EXIT_CODE=$?
+
+# Print output
+echo "$OUTPUT"
+
+# Change directory if successful
+if [[ $EXIT_CODE -eq 0 ]]; then
+    CAPSULE_PATH="$CATALYST_ROOT/capsules/$CAPSULE_SLUG"
+
+    if [[ -n "$SUBDIR" ]]; then
+        cd "$CAPSULE_PATH/$SUBDIR" || return 1
+    else
+        cd "$CAPSULE_PATH" || return 1
+    fi
+fi
+
+return $EXIT_CODE

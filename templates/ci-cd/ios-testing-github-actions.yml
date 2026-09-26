@@ -1,0 +1,206 @@
+# GitHub Actions - iOS Testing Pipeline
+# Place this file at: .github/workflows/ios-testing.yml
+
+name: iOS Testing Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  SCHEME: "MyApp"
+  BUNDLE_ID: "com.example.MyApp"
+  SIMULATOR: "iPhone 16"
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Dependencies
+        run: |
+          pip3 install Pillow numpy
+          gem install json
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.gem
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/Pipfile.lock', '**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Select Xcode Version
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Boot Simulator
+        run: |
+          xcrun simctl boot "$SIMULATOR" || true
+          sleep 10
+
+          # Verify simulator is booted
+          xcrun simctl list devices | grep Booted
+
+      - name: Build App
+        run: |
+          xcodebuild build \
+            -scheme $SCHEME \
+            -destination "platform=iOS Simulator,name=$SIMULATOR" \
+            -configuration Debug
+
+      - name: Select Test Preset
+        id: preset
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "preset=comprehensive" >> $GITHUB_OUTPUT
+          else
+            echo "preset=minimal" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Test Matrix
+        run: |
+          cd testing
+          ./scripts/run-matrix-tests.sh ${{ steps.preset.outputs.preset }}
+
+      - name: Visual Regression Tests
+        run: |
+          cd testing
+          if [ -d baseline-screenshots ] && [ -n "$(ls -A baseline-screenshots)" ]; then
+            ./scripts/run-visual-diff.sh
+          else
+            echo "⚠️  No baseline screenshots - skipping visual regression"
+          fi
+
+      - name: Network Analysis
+        run: |
+          cd testing
+          ./scripts/analyze-network.sh || true
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ github.sha }}
+          path: testing/test-results/
+          retention-days: 30
+
+      - name: Check for Visual Regressions
+        run: |
+          if [ -f testing/test-results/visual-diff-*/diff-results.json ]; then
+            DIFF_COUNT=$(cat testing/test-results/visual-diff-*/diff-results.json | jq '.different')
+            if [ "$DIFF_COUNT" -gt 0 ]; then
+              echo "❌ $DIFF_COUNT visual regressions detected"
+              exit 1
+            fi
+          fi
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          cd testing/test-results
+          cat > GITHUB_SUMMARY.md << EOF
+          # iOS Testing Results - Run #${{ github.run_number }}
+
+          ## Test Matrix
+          - Preset: ${{ steps.preset.outputs.preset }}
+          - [View Report](${{ steps.preset.outputs.preset }}/report.html)
+
+          ## Visual Regression
+          - [View Report](visual-diff-*/report.html)
+
+          ## Network Analysis
+          - [View Report](network-analysis-*.html)
+
+          ## Build Info
+          - Branch: ${{ github.ref_name }}
+          - Commit: ${{ github.sha }}
+          - Author: ${{ github.actor }}
+          - Run: #${{ github.run_number }}
+          EOF
+
+      - name: Post Results Comment
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request' && always()
+        with:
+          script: |
+            const fs = require('fs');
+
+            let summary = "# 🧪 iOS Testing Results\n\n";
+
+            // Add test matrix results
+            summary += "## Test Matrix\n";
+            summary += "- Preset: ${{ steps.preset.outputs.preset }}\n";
+            summary += "- Status: ${{ job.status }}\n\n";
+
+            // Check for visual regressions
+            try {
+              if (fs.existsSync('testing/test-results/visual-diff-*/diff-results.json')) {
+                const diffResults = JSON.parse(fs.readFileSync('testing/test-results/visual-diff-*/diff-results.json', 'utf8'));
+                summary += "## Visual Regression\n";
+                summary += `- Matched: ${diffResults.matched}\n`;
+                summary += `- Different: ${diffResults.different}\n`;
+                summary += `- Errors: ${diffResults.errors}\n\n`;
+
+                if (diffResults.different > 0) {
+                  summary += "⚠️ **Visual regressions detected!**\n\n";
+                }
+              }
+            } catch (error) {
+              summary += "## Visual Regression\n";
+              summary += "- Status: No baseline screenshots or test not run\n\n";
+            }
+
+            summary += "## Artifacts\n";
+            summary += "- Test results available in Actions artifacts\n";
+            summary += `- Run: #${{ github.run_number }}\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: summary
+            });
+
+  comprehensive-nightly:
+    runs-on: macos-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Dependencies
+        run: |
+          pip3 install Pillow numpy
+          gem install json
+
+      - name: Boot Simulator
+        run: |
+          xcrun simctl boot "$SIMULATOR" || true
+          sleep 10
+
+      - name: Run Comprehensive Pipeline
+        run: |
+          cd testing
+          ./scripts/run-comprehensive-pipeline.sh
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: nightly-results-${{ github.sha }}
+          path: testing/test-results/
+          retention-days: 90
+
+# Optional: Scheduled nightly comprehensive tests
+# Uncomment to enable
+# on:
+#   schedule:
+#     - cron: '0 0 * * *'  # Midnight UTC

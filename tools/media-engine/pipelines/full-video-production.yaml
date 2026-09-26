@@ -1,0 +1,51 @@
+name: Full Video Production Pipeline
+description: >
+  End-to-end product video production: generate a hero product image,
+  create detail variant shots, produce a product promo video from the
+  hero, then compose all assets into a final rendered timeline via MLT.
+
+steps:
+  - name: hero_image
+    workflow: product-photography
+    prompt: "{base_prompt}"
+
+  - name: detail_variants
+    workflow: product-photography
+    prompt: "Detail close-up variant of the product, different angle"
+    input_from: hero_image
+    count: 3
+
+  - name: product_video
+    workflow: video-promo
+    prompt: "15 second cinematic product showcase video"
+    source_image_from: hero_image
+
+  - name: final_render
+    type: mlt_render
+    description: >
+      Compose hero image (3s hold), detail variants (2s each with
+      luma transitions), and the product video into a single output.
+    inputs:
+      - hero_image
+      - detail_variants
+      - product_video
+    config:
+      codec: libx264
+      resolution: "1080p"
+      bitrate: "10000k"
+      fps: 24
+      audio_codec: aac
+      format: mp4
+    composition:
+      - source: hero_image
+        duration_seconds: 3
+        type: still
+      - source: detail_variants
+        duration_seconds: 2
+        type: still
+        transition: luma
+        transition_frames: 12
+      - source: product_video
+        type: video
+        transition: luma
+        transition_frames: 12

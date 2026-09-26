@@ -1,0 +1,156 @@
+#!/bin/bash
+# Launch Claude Code in Infinity mode using Bifrost + Claude Code Router.
+# Configures Bifrost gateway and router env vars for this process tree only.
+
+set -euo pipefail
+
+BIFROST_HEALTH_URL="http://localhost:8083/v1/models"
+ROUTER_HEALTH_URL="http://127.0.0.1:3456/health"
+GATEWAY_START_SCRIPT="{{CATALYST_ROOT}}/tools/start-infinity-gateway.sh"
+
+DEFAULT_PATH="/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:/opt/homebrew/sbin"
+PATH="${PATH:-$DEFAULT_PATH}"
+export PATH="$HOME/.local/share/pnpm:$HOME/Library/pnpm:$PATH"
+
+LOG_DIR="$HOME/Library/Logs/ClaudeInfinity"
+LOG_FILE="$LOG_DIR/run-infinity.log"
+
+mkdir -p "$LOG_DIR"
+
+timestamp() {
+    date +"%Y-%m-%d %H:%M:%S"
+}
+
+log() {
+    printf '[%s] %s\n' "$(timestamp)" "$*" >> "$LOG_FILE"
+}
+
+ENV_FILE="{{CATALYST_ROOT}}/.env"
+if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC2046,SC2002
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+    log "Loaded environment variables from $ENV_FILE."
+else
+    log "No .env file found at $ENV_FILE; continuing with existing environment."
+fi
+
+trap 'log "run-infinity.sh exiting with status $?."' EXIT
+
+log "run-infinity.sh started (PID $$)."
+log "PATH resolved to: $PATH"
+
+# Check if Bifrost is running
+BIFROST_RUNNING=false
+if curl -s "$BIFROST_HEALTH_URL" > /dev/null 2>&1; then
+    BIFROST_RUNNING=true
+    log "Bifrost gateway already running on port 8083."
+fi
+
+# Check if Router is running
+ROUTER_RUNNING=false
+if curl -s "$ROUTER_HEALTH_URL" > /dev/null 2>&1; then
+    ROUTER_RUNNING=true
+    log "Claude Code Router already running on port 3456."
+fi
+
+# Start gateway if either component is not running
+if [ "$BIFROST_RUNNING" = false ] || [ "$ROUTER_RUNNING" = false ]; then
+    log "Gateway not fully running; attempting to start via start-infinity-gateway.sh."
+
+    if [ ! -x "$GATEWAY_START_SCRIPT" ]; then
+        log "Missing gateway start script at $GATEWAY_START_SCRIPT."
+        exit 1
+    fi
+
+    "$GATEWAY_START_SCRIPT" >> "$LOG_FILE" 2>&1
+   log "Invoked gateway start script."
+
+    # Wait up to ~15s for services to start
+    for attempt in {1..15}; do
+        BIFROST_UP=false
+        ROUTER_UP=false
+
+        if curl -s "$BIFROST_HEALTH_URL" > /dev/null 2>&1; then
+            BIFROST_UP=true
+        fi
+
+        if curl -s "$ROUTER_HEALTH_URL" > /dev/null 2>&1; then
+            ROUTER_UP=true
+        fi
+
+        if [ "$BIFROST_UP" = true ] && [ "$ROUTER_UP" = true ]; then
+            log "Both Bifrost and Router reported healthy."
+            break
+        fi
+
+        sleep 1
+    done
+
+    # Final health check
+    if ! curl -s "$BIFROST_HEALTH_URL" > /dev/null 2>&1; then
+        log "Bifrost unavailable after waiting; exiting with failure."
+        exit 1
+    fi
+
+    if ! curl -s "$ROUTER_HEALTH_URL" > /dev/null 2>&1; then
+        log "Router unavailable after waiting; exiting with failure."
+        exit 1
+    fi
+else
+    log "Both Bifrost and Router already healthy."
+fi
+
+# Export environment for Infinity Mode
+export ANTHROPIC_BASE_URL="http://127.0.0.1:3456"
+log "Environment variable exported: ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL"
+
+# Router API auth (Claude Code Router API key)
+export ANTHROPIC_API_KEY="dev-router-key"
+log "Environment variable exported: ANTHROPIC_API_KEY set (router key)"
+
+export CLAUDE_GATEWAY_MODE="infinity"
+export CLAUDE_GATEWAY_STACK="bifrost"
+export CLAUDE_GATEWAY_TARGET="${CLAUDE_GATEWAY_TARGET:-openai-codex/gpt-5.3-codex}"
+log "Gateway mode set to Infinity (Bifrost stack)."
+
+GATEWAY_MODE_FILE="$HOME/.claude/gateway-mode"
+mkdir -p "$(dirname "$GATEWAY_MODE_FILE")"
+echo "infinity" > "$GATEWAY_MODE_FILE"
+log "Recorded gateway mode in $GATEWAY_MODE_FILE."
+
+cd {{CATALYST_ROOT}}
+
+# Query router for current model configuration (with quick timeout)
+CURRENT_MODEL="minimax-m2"
+if ROUTER_CONFIG=$(curl -s --max-time 0.5 "http://127.0.0.1:3456/api/config" 2>/dev/null); then
+    # Extract the default route and parse the model name
+    # Router.default format is "provider,model" - we want the model part after comma
+    if command -v jq &> /dev/null; then
+        # Use jq if available for reliable JSON parsing
+        ROUTER_DEFAULT=$(echo "$ROUTER_CONFIG" | jq -r '.Router.default // empty')
+        if [ -n "$ROUTER_DEFAULT" ]; then
+            # Extract just the model name (strip provider and path prefix)
+            FULL_MODEL="${ROUTER_DEFAULT#*,}"
+            CURRENT_MODEL="${FULL_MODEL##*/}"  # Get last part after final slash
+        fi
+    fi
+fi
+
+echo "Current Model: $CURRENT_MODEL"
+echo "Logs: $LOG_FILE"
+echo "Router Logs: \$HOME/.claude-code-router/logs/"
+echo ""
+log "Gateway ready; launching interactive shell with model: $CURRENT_MODEL"
+
+# Create a temporary init file to preserve Infinity Mode environment and open a login shell
+INFINITY_INIT_FILE="$HOME/.zsh_infinity_init"
+cat > "$INFINITY_INIT_FILE" << 'INFINITY_INIT_EOF'
+# Auto-generated by run-infinity.sh - DO NOT EDIT MANUALLY
+export ANTHROPIC_BASE_URL="http://127.0.0.1:3456"
+export ANTHROPIC_API_KEY="dev-router-key"
+export CLAUDE_GATEWAY_MODE="infinity"
+export CLAUDE_GATEWAY_STACK="bifrost"
+INFINITY_INIT_EOF
+
+# Launch a login interactive shell that inherits the Infinity env
+exec /bin/zsh -l -i

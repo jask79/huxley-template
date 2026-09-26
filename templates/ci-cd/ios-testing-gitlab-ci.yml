@@ -1,0 +1,160 @@
+# GitLab CI/CD - iOS Testing Pipeline
+# Place this file at: .gitlab-ci.yml
+
+stages:
+  - setup
+  - build
+  - test
+  - analyze
+  - report
+
+variables:
+  SCHEME: "MyApp"
+  BUNDLE_ID: "com.example.MyApp"
+  SIMULATOR: "iPhone 16"
+
+# Setup dependencies
+setup:
+  stage: setup
+  tags:
+    - macos
+  script:
+    - pip3 install Pillow numpy
+    - gem install json
+  cache:
+    paths:
+      - ~/.cache/pip
+      - ~/.gem
+
+# Build app
+build:
+  stage: build
+  tags:
+    - macos
+  script:
+    - xcrun simctl boot "$SIMULATOR" || true
+    - sleep 10
+    - xcodebuild build
+        -scheme $SCHEME
+        -destination "platform=iOS Simulator,name=$SIMULATOR"
+        -configuration Debug
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 hour
+
+# Run test matrix (minimal for PR, comprehensive for main)
+test:matrix:minimal:
+  stage: test
+  tags:
+    - macos
+  only:
+    - merge_requests
+  script:
+    - cd testing
+    - ./scripts/run-matrix-tests.sh minimal
+  artifacts:
+    paths:
+      - testing/test-results/
+    reports:
+      junit: testing/test-results/minimal/results.xml
+    expire_in: 1 week
+
+test:matrix:comprehensive:
+  stage: test
+  tags:
+    - macos
+  only:
+    - main
+    - develop
+  script:
+    - cd testing
+    - ./scripts/run-matrix-tests.sh comprehensive
+  artifacts:
+    paths:
+      - testing/test-results/
+    reports:
+      junit: testing/test-results/comprehensive/results.xml
+    expire_in: 1 month
+
+# Visual regression testing
+test:visual-regression:
+  stage: test
+  tags:
+    - macos
+  needs: ["test:matrix:minimal"]
+  script:
+    - cd testing
+    - |
+      if [ -d baseline-screenshots ] && [ -n "$(ls -A baseline-screenshots)" ]; then
+        ./scripts/run-visual-diff.sh
+      else
+        echo "⚠️  No baseline screenshots - skipping"
+      fi
+  artifacts:
+    paths:
+      - testing/test-results/visual-diff-*/
+    when: always
+    expire_in: 1 week
+
+# Network analysis
+analyze:network:
+  stage: analyze
+  tags:
+    - macos
+  needs: ["test:matrix:minimal"]
+  script:
+    - cd testing
+    - ./scripts/analyze-network.sh || true
+  artifacts:
+    paths:
+      - testing/test-results/network-*.html
+    expire_in: 1 week
+
+# Generate test report
+report:
+  stage: report
+  tags:
+    - macos
+  needs: ["test:matrix:minimal", "test:visual-regression", "analyze:network"]
+  script:
+    - |
+      cat > testing/test-results/GITLAB_SUMMARY.md << EOF
+      # iOS Testing Results - Pipeline #$CI_PIPELINE_ID
+
+      ## Test Matrix
+      - Configuration: Minimal (6 combinations)
+      - [View Report](matrix-minimal/report.html)
+
+      ## Visual Regression
+      - [View Diff Report](visual-diff-*/report.html)
+
+      ## Network Analysis
+      - [View Network Report](network-*.html)
+
+      ## Build Info
+      - Branch: $CI_COMMIT_BRANCH
+      - Commit: $CI_COMMIT_SHORT_SHA
+      - Author: $CI_COMMIT_AUTHOR
+      EOF
+  artifacts:
+    paths:
+      - testing/test-results/GITLAB_SUMMARY.md
+    expire_in: 1 month
+
+# Fail if visual regressions detected
+check:regressions:
+  stage: report
+  tags:
+    - macos
+  needs: ["test:visual-regression"]
+  script:
+    - |
+      if [ -f testing/test-results/visual-diff-*/diff-results.json ]; then
+        DIFF_COUNT=$(cat testing/test-results/visual-diff-*/diff-results.json | jq '.different')
+        if [ "$DIFF_COUNT" -gt 0 ]; then
+          echo "❌ $DIFF_COUNT visual regressions detected"
+          exit 1
+        fi
+      fi
+  allow_failure: false

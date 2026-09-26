@@ -1,0 +1,286 @@
+# Go Sharp Edges
+# Production gotchas for Go services, goroutines, and concurrency
+
+edges:
+  # === CRITICAL: Concurrency ===
+
+  - id: goroutine_leak
+    severity: critical
+    category: reliability
+    pattern: "Goroutine started without lifecycle management"
+    detection:
+      - type: semantic
+        description: "Goroutine (go func) without context cancellation (ctx.Done), channel close, select{}, or sync.WaitGroup — no lifecycle management"
+    why: "Leaked goroutines accumulate memory and file descriptors until OOM"
+    fix: "Use context.Context for cancellation, or sync.WaitGroup for lifecycle"
+    examples:
+      bad: |
+        go func() {
+            for {
+                data := <-ch
+                process(data)
+            }
+        }()
+      good: |
+        go func() {
+            for {
+                select {
+                case data := <-ch:
+                    process(data)
+                case <-ctx.Done():
+                    return
+                }
+            }
+        }()
+    tags: ["goroutines", "memory-leak"]
+
+  - id: race_condition_shared_map
+    severity: critical
+    category: correctness
+    pattern: "Concurrent map access without synchronization"
+    detection:
+      - type: regex
+        value: 'go\s+func[\s\S]*\w+\[\w+\]\s*='
+        files: ["*.go"]
+      - type: semantic
+        description: "Map read/write from multiple goroutines without sync.Mutex or sync.Map"
+    why: "Concurrent map writes cause fatal panic in Go"
+    fix: "Use sync.Mutex, sync.RWMutex, or sync.Map"
+    examples:
+      bad: |
+        var cache = map[string]string{}
+        go func() { cache["key"] = "val" }()
+        go func() { _ = cache["key"] }()
+      good: |
+        var cache sync.Map
+        go func() { cache.Store("key", "val") }()
+        go func() { v, _ := cache.Load("key"); _ = v }()
+    tags: ["concurrency", "maps"]
+
+  - id: channel_deadlock
+    severity: critical
+    category: correctness
+    pattern: "Unbuffered channel send/receive without corresponding counterpart"
+    detection:
+      - type: semantic
+        description: "Channel created without buffer and only sender or receiver in scope"
+    why: "Unbuffered channels block forever if counterpart is missing — deadlock"
+    fix: "Use buffered channels or ensure send/receive are paired"
+    tags: ["channels", "deadlock"]
+
+  # === CRITICAL: Error Handling ===
+
+  - id: unchecked_error
+    severity: critical
+    category: correctness
+    pattern: "Ignoring error return value"
+    detection:
+      - type: semantic
+        description: "Function call that returns an error but the error is assigned to _ or the return value is completely ignored (not map lookups or type assertions)"
+    why: "Ignored errors hide bugs, data corruption, and security issues"
+    fix: "Always handle errors — return, log, or explicitly comment why ignored"
+    examples:
+      bad: |
+        f, _ := os.Open(path)
+        json.NewDecoder(r.Body).Decode(&req)
+      good: |
+        f, err := os.Open(path)
+        if err != nil {
+            return fmt.Errorf("open %s: %w", path, err)
+        }
+    tags: ["error-handling", "go-idiom"]
+
+  - id: error_string_comparison
+    severity: warning
+    category: correctness
+    pattern: "Comparing error by string instead of errors.Is/As"
+    detection:
+      - type: regex
+        value: 'err\.Error\(\)\s*==|strings\.Contains\(err\.Error\(\)'
+        files: ["*.go"]
+    why: "String comparison breaks when error messages change"
+    fix: "Use errors.Is() or errors.As() for type-safe error checking"
+    examples:
+      bad: |
+        if err.Error() == "not found" {
+      good: |
+        if errors.Is(err, ErrNotFound) {
+    tags: ["error-handling", "go-idiom"]
+
+  # === WARNING: Resource Management ===
+
+  - id: unclosed_response_body
+    severity: warning
+    category: reliability
+    pattern: "HTTP response body not closed"
+    detection:
+      - type: regex
+        value: 'http\.\w+\([^)]*\)(?![\s\S]*\.Body\.Close)'
+        files: ["*.go"]
+    why: "Unclosed response bodies leak TCP connections"
+    fix: "Always defer resp.Body.Close() after nil error check"
+    examples:
+      bad: |
+        resp, err := http.Get(url)
+        data, _ := io.ReadAll(resp.Body)
+      good: |
+        resp, err := http.Get(url)
+        if err != nil { return err }
+        defer resp.Body.Close()
+        data, err := io.ReadAll(resp.Body)
+    tags: ["http", "resource-leak"]
+
+  - id: defer_in_loop
+    severity: warning
+    category: reliability
+    pattern: "defer inside a loop"
+    detection:
+      - type: semantic
+        description: "defer statement inside a for loop body — deferred calls accumulate until function returns, not per iteration"
+    why: "Deferred calls accumulate until function returns, not loop iteration"
+    fix: "Extract loop body to a function, or close resources explicitly"
+    examples:
+      bad: |
+        for _, file := range files {
+            f, _ := os.Open(file)
+            defer f.Close()  // All close at function end!
+        }
+      good: |
+        for _, file := range files {
+            func() {
+                f, _ := os.Open(file)
+                defer f.Close()
+                // process f
+            }()
+        }
+    tags: ["defer", "resource-leak"]
+
+  - id: context_without_cancel
+    severity: warning
+    category: reliability
+    pattern: "context.WithCancel/WithTimeout without calling cancel"
+    detection:
+      - type: semantic
+        description: "context.WithCancel, WithTimeout, or WithDeadline called but cancel() is not deferred or called in the same function scope"
+    why: "Leaked contexts hold resources and goroutines"
+    fix: "Always defer cancel() immediately after creating context"
+    examples:
+      good: |
+        ctx, cancel := context.WithTimeout(parentCtx, 5*time.Second)
+        defer cancel()
+    tags: ["context", "resource-leak"]
+
+  # === WARNING: Performance ===
+
+  - id: string_concat_in_loop
+    severity: warning
+    category: performance
+    pattern: "String concatenation in a loop"
+    detection:
+      - type: regex
+        value: '\+=\s*"'
+        files: ["*.go"]
+      - type: semantic
+        description: "String += concatenation inside a for loop — O(n^2) allocation pattern"
+    why: "String concatenation allocates new string each iteration — O(n^2)"
+    fix: "Use strings.Builder for loop concatenation"
+    examples:
+      bad: |
+        var result string
+        for _, s := range items {
+            result += s
+        }
+      good: |
+        var b strings.Builder
+        for _, s := range items {
+            b.WriteString(s)
+        }
+        result := b.String()
+    tags: ["performance", "strings"]
+
+  - id: json_marshal_in_hot_path
+    severity: info
+    category: performance
+    pattern: "json.Marshal/Unmarshal in high-frequency code"
+    detection:
+      - type: semantic
+        description: "JSON encoding/decoding in a loop or handler called per-request"
+    why: "reflection-based JSON is slow — use code-generated alternatives"
+    fix: "Use easyjson, sonic, or go-json for hot paths"
+    tags: ["performance", "serialization"]
+
+  # === INFO: Best Practices ===
+
+  - id: naked_return
+    severity: info
+    category: maintainability
+    pattern: "Naked return in long function"
+    detection:
+      - type: semantic
+        description: "Named return values with bare 'return' in function >20 lines"
+    why: "Naked returns are confusing in long functions"
+    fix: "Use explicit return values for functions over 10 lines"
+    tags: ["readability", "go-idiom"]
+
+  - id: init_function_side_effects
+    severity: warning
+    category: maintainability
+    pattern: "init() function with external side effects"
+    detection:
+      - type: semantic
+        description: "init() function performs network calls, file I/O, database connections, or shell commands — runs at import time, untestable"
+    why: "init() runs at import time — network/file I/O makes testing impossible"
+    fix: "Move initialization to explicit Setup() or main()"
+    tags: ["testing", "init"]
+
+  # === Additional Patterns (Reviewer-suggested) ===
+
+  - id: panic_in_library
+    severity: warning
+    category: correctness
+    pattern: "panic() in non-main package"
+    detection:
+      - type: regex
+        value: '\bpanic\s*\('
+        files: ["*.go"]
+      - type: semantic
+        description: "panic() called in a library package (not main) for a recoverable error — callers cannot handle it"
+    why: "panic in libraries crashes the caller with no recovery path"
+    fix: "Return errors instead of panicking — let callers decide how to handle"
+    examples:
+      bad: |
+        func ParseConfig(path string) Config {
+            data, err := os.ReadFile(path)
+            if err != nil { panic(err) }
+        }
+      good: |
+        func ParseConfig(path string) (Config, error) {
+            data, err := os.ReadFile(path)
+            if err != nil { return Config{}, fmt.Errorf("read config: %w", err) }
+        }
+    tags: ["error-handling", "library"]
+
+  - id: os_exit_in_library
+    severity: warning
+    category: correctness
+    pattern: "os.Exit() outside main package"
+    detection:
+      - type: regex
+        value: 'os\.Exit\s*\('
+        files: ["*.go"]
+      - type: semantic
+        description: "os.Exit() in non-main package — bypasses deferred cleanup and breaks testability"
+    why: "os.Exit skips all deferred calls and prevents testing"
+    fix: "Return an error and let main() call os.Exit"
+    tags: ["error-handling", "testing"]
+
+  - id: time_now_in_test
+    severity: info
+    category: maintainability
+    pattern: "time.Now() usage making tests non-deterministic"
+    detection:
+      - type: semantic
+        description: "Production code uses time.Now() directly instead of an injectable clock — makes unit tests time-dependent"
+    why: "Tests depending on real time are flaky and non-reproducible"
+    fix: "Accept a clock interface or time.Now function as a parameter for testability"
+    tags: ["testing", "determinism"]

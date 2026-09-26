@@ -1,0 +1,186 @@
+{
+  "name": "config",
+  "signature": "config: SpringConfig",
+  "description": "Spring physics configuration that controls animation behavior. React-spring uses real spring physics simulation (not time-based easing) for natural, realistic motion.",
+  "parameters": [
+    {
+      "name": "mass",
+      "type": "number",
+      "default": 1,
+      "description": "Spring mass (weight). Higher mass = slower movement, more momentum. Think: heavy vs. light objects.",
+      "physics": "Increases inertia. Heavy springs take longer to accelerate and decelerate."
+    },
+    {
+      "name": "tension",
+      "type": "number",
+      "default": 170,
+      "description": "Spring stiffness. Higher tension = faster, snappier animations. Think: tight vs. loose rubber band.",
+      "physics": "Force that pulls spring toward target. Higher values create faster oscillations."
+    },
+    {
+      "name": "friction",
+      "type": "number",
+      "default": 26,
+      "description": "Spring resistance (damping). Higher friction = less bouncy, more controlled. Think: air resistance.",
+      "physics": "Opposes motion and reduces oscillation. Low friction = bouncy, high friction = smooth stop."
+    },
+    {
+      "name": "bounce",
+      "type": "number",
+      "default": null,
+      "description": "Alternative to friction using bounce coefficient (0 = no bounce, 1 = very bouncy). Easier to tune than friction.",
+      "physics": "0 = critically damped (no overshoot), 0.5 = some bounce, 1 = continuous oscillation"
+    },
+    {
+      "name": "frequency",
+      "type": "number",
+      "default": null,
+      "description": "Alternative to tension. Natural frequency of oscillation in Hz. Easier to reason about than tension.",
+      "physics": "How many oscillations per second if no friction. Higher = faster spring."
+    },
+    {
+      "name": "damping",
+      "type": "number",
+      "default": 1,
+      "description": "Alternative to friction using damping ratio. 1 = critically damped (no overshoot), <1 = underdamped (bouncy), >1 = overdamped (sluggish).",
+      "physics": "Standard physics term. 1.0 = fastest approach without overshoot. Use with frequency for precise control."
+    },
+    {
+      "name": "clamp",
+      "type": "boolean",
+      "default": false,
+      "description": "When true, stops spring at target value (no overshoot). Useful for preventing UI elements from exceeding bounds.",
+      "physics": "Disables spring physics at target, converting to linear approach."
+    },
+    {
+      "name": "precision",
+      "type": "number",
+      "default": 0.01,
+      "description": "Minimum velocity threshold before animation completes. Lower = more accurate but longer animations.",
+      "physics": "Defines 'close enough' to target. Prevents infinite tiny movements."
+    },
+    {
+      "name": "velocity",
+      "type": "number",
+      "default": 0,
+      "description": "Initial velocity of the spring. Useful for gesture-based animations that should continue momentum.",
+      "physics": "Starting speed. Positive = moving toward target, negative = moving away."
+    },
+    {
+      "name": "round",
+      "type": "number",
+      "default": null,
+      "description": "Round output values to nearest multiple. E.g., round: 1 = integers only. Prevents sub-pixel rendering.",
+      "physics": "Post-processing step, doesn't affect physics simulation."
+    },
+    {
+      "name": "duration",
+      "type": "number (milliseconds)",
+      "default": null,
+      "description": "Use time-based animation instead of spring physics. Overrides mass/tension/friction. Useful for precise timing.",
+      "physics": "DISABLES spring physics entirely. Uses easing function over fixed time."
+    },
+    {
+      "name": "easing",
+      "type": "function",
+      "default": "t => t (linear)",
+      "description": "Easing function for duration-based animations. Only works when duration is set. Import from @react-spring/web easings.",
+      "physics": "Maps linear time (0-1) to animation progress. Common: easeOutQuad, easeInOutCubic, easeOutBounce."
+    },
+    {
+      "name": "decay",
+      "type": "boolean | number",
+      "default": false,
+      "description": "Natural decay animation (like physics drag). True = auto-calculate, number = custom decay rate. Great for scroll/fling gestures.",
+      "physics": "Exponential velocity decay. Initial velocity required. No target value."
+    }
+  ],
+  "presets": [
+    {
+      "name": "config.default",
+      "values": { "tension": 170, "friction": 26 },
+      "description": "Balanced spring - general purpose",
+      "useCase": "Standard UI animations"
+    },
+    {
+      "name": "config.gentle",
+      "values": { "tension": 120, "friction": 14 },
+      "description": "Soft, smooth spring - elegant motion",
+      "useCase": "Subtle transitions, refined UI"
+    },
+    {
+      "name": "config.wobbly",
+      "values": { "tension": 180, "friction": 12 },
+      "description": "Low friction spring - playful bounce",
+      "useCase": "Fun interactions, attention-grabbing"
+    },
+    {
+      "name": "config.stiff",
+      "values": { "tension": 210, "friction": 20 },
+      "description": "High tension spring - fast and responsive",
+      "useCase": "Quick feedback, snappy buttons"
+    },
+    {
+      "name": "config.slow",
+      "values": { "tension": 280, "friction": 60 },
+      "description": "High friction spring - controlled motion",
+      "useCase": "Slow reveals, dramatic entrances"
+    },
+    {
+      "name": "config.molasses",
+      "values": { "tension": 280, "friction": 120 },
+      "description": "Very high friction - extremely slow",
+      "useCase": "Ultra-slow transitions, special effects"
+    }
+  ],
+  "returns": {
+    "type": "SpringConfig",
+    "description": "Physics configuration object that defines spring behavior"
+  },
+  "examples": [
+    {
+      "title": "Using presets",
+      "code": "import { useSpring, config } from '@react-spring/web'\n\nconst springs = useSpring({\n  from: { opacity: 0 },\n  to: { opacity: 1 },\n  config: config.gentle  // Smooth, elegant motion\n})"
+    },
+    {
+      "title": "Custom spring physics",
+      "code": "const springs = useSpring({\n  from: { x: 0 },\n  to: { x: 100 },\n  config: {\n    mass: 1,       // Standard weight\n    tension: 170,  // Moderate stiffness\n    friction: 26,  // Balanced damping\n  }\n})"
+    },
+    {
+      "title": "Using frequency and damping (easier tuning)",
+      "code": "const springs = useSpring({\n  from: { scale: 0 },\n  to: { scale: 1 },\n  config: {\n    frequency: 2,    // 2 oscillations per second\n    damping: 0.5,    // Underdamped (bouncy)\n  }\n})"
+    },
+    {
+      "title": "Duration-based with easing",
+      "code": "import { easings } from '@react-spring/web'\n\nconst springs = useSpring({\n  from: { y: -100 },\n  to: { y: 0 },\n  config: {\n    duration: 1000,                    // 1 second\n    easing: easings.easeOutCubic,     // Smooth deceleration\n  }\n})"
+    },
+    {
+      "title": "Per-value configuration",
+      "code": "const springs = useSpring({\n  from: { x: 0, opacity: 0 },\n  to: { x: 100, opacity: 1 },\n  config: key => {\n    if (key === 'x') {\n      return { tension: 210, friction: 20 }  // Fast movement\n    }\n    if (key === 'opacity') {\n      return { duration: 500 }               // Timed fade\n    }\n  }\n})"
+    },
+    {
+      "title": "Decay animation (for gestures)",
+      "code": "const [{ x }, api] = useSpring(() => ({ x: 0 }))\n\nconst handleDrag = (velocity) => {\n  api.start({\n    x: x.get() + velocity * 100,  // Project based on velocity\n    config: {\n      decay: true,                 // Natural deceleration\n      velocity: velocity,          // Initial velocity from gesture\n    }\n  })\n}"
+    },
+    {
+      "title": "Preventing overshoot",
+      "code": "const springs = useSpring({\n  from: { width: 0 },\n  to: { width: 200 },\n  config: {\n    tension: 170,\n    friction: 26,\n    clamp: true,     // Stop exactly at 200px (no bounce)\n  }\n})"
+    }
+  ],
+  "physicsExplanation": {
+    "springPhysics": "React-spring simulates real spring-damper physics using Hooke's Law (F = -kx) and damping forces. This creates natural, realistic motion that feels responsive to user input.",
+    "tuningGuidance": "Start with presets. For custom tuning: increase tension for faster motion, increase friction to reduce bounce. Or use frequency (Hz) + damping ratio (0-2) for intuitive control.",
+    "whenToUsePhysics": "Use spring physics (default) for interactive UIs, gestures, and natural motion. Springs automatically adapt to interruptions and feel responsive.",
+    "whenToUseDuration": "Use duration-based animations for choreographed sequences, precise timing requirements, or matching design specs. Less natural but more predictable."
+  },
+  "commonPatterns": [
+    "Quick buttons: config.stiff or { tension: 210, friction: 20 }",
+    "Smooth modals: config.gentle or { tension: 120, friction: 14 }",
+    "Playful interactions: config.wobbly or { tension: 180, friction: 12 }",
+    "Slow reveals: config.slow or { duration: 2000, easing: easings.easeOutQuad }",
+    "Gesture momentum: { decay: true, velocity: gestureVelocity }",
+    "No overshoot: { ...config.default, clamp: true }",
+    "Precise timing: { duration: 500, easing: easings.easeInOutCubic }"
+  ],
+  "relatedHooks": ["useSpring", "useTrail", "useTransition", "useSpringValue"]
+}

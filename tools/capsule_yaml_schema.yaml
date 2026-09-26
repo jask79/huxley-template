@@ -1,0 +1,115 @@
+# Huxley Capsule YAML Schema
+# This is the canonical structure for capsule specifications
+
+# Required fields
+name: string              # Capsule name (kebab-case)
+version: string           # Semantic version (e.g., "1.0.0")
+status: string            # planning | development | production | maintenance | archived
+description: string       # Brief description (1-2 sentences)
+
+# Purpose & Vision
+purpose:
+  what: string           # What this capsule does
+  why: string            # Why it exists
+  for_whom: string       # Target user/use case
+
+# Current state
+current:
+  phase: string          # Current development phase
+  last_updated: string   # ISO date
+  health: string         # healthy | degraded | broken | unknown
+
+# Technical details
+technical:
+  stack: []              # List of technologies (e.g., ["Python 3.11", "FastAPI"])
+
+  dependencies:
+    external: []         # External services/APIs
+    internal: []         # Other Huxley capsules
+    packages: {}         # Package name: version
+
+  architecture:
+    pattern: string      # microservices | monolith | automation | library
+    components: []       # List of major components
+      # - name: string
+      #   purpose: string
+      #   tech: string
+    data_flow: string    # High-level data flow description
+
+  integrations:
+    apis: []             # External APIs used
+    mcps: []             # Required MCP servers
+    services: []         # External services
+
+# Capabilities (what it can do)
+capabilities: []         # List of key features/capabilities
+
+# Quality & Standards
+quality:
+  standards:
+    - rule: string       # Quality rule/standard
+      threshold: string  # Threshold/target
+
+  security:
+    - requirement: string  # Security requirement
+
+  performance:
+    - metric: string       # Performance metric
+      target: string       # Target value
+
+# Development
+development:
+  workflow: string       # How to develop (prose)
+  tools: []              # Development tools
+  testing: string        # Testing approach
+
+# Data & Storage
+data:
+  storage: []            # Storage locations/types
+    # - location: string
+    #   purpose: string
+  retention: {}          # Retention policies
+
+# Maintenance
+maintenance:
+  schedule: string       # Maintenance schedule
+  monitoring: []         # What to monitor
+  automation: []         # Automated maintenance tasks
+
+# Vision & Roadmap
+vision:
+  statement: string      # Long-term vision
+  roadmap: []            # Ordered list of roadmap items
+    # - phase: string
+    #   target: string
+    #   items: []
+
+  open_bets: []          # Ideas/possibilities
+    # - idea: string
+    #   rationale: string
+
+# Guardrails (never do this)
+guardrails: []           # List of rules/constraints
+  # - rule: string
+  #   rationale: string
+
+# Relationships
+relationships:
+  feeds_into: []         # Capsules that consume from this
+  consumes_from: []      # Capsules this depends on
+  shared_with: []        # Capsules with shared resources
+
+# Metadata
+metadata:
+  created: string        # ISO date
+  tags: []               # Categorization tags
+  priority: string       # high | medium | low
+  revenue_impact: string # direct | indirect | none
+
+# Auto-updated fields (managed by SessionEnd hook)
+_auto:
+  last_session: string   # ISO datetime
+  session_count: number  # Total sessions
+  loc: number            # Lines of code
+  file_count: number     # Number of files
+  last_commit: string    # Last commit hash

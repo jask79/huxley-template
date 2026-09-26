@@ -1,0 +1,62 @@
+name: System Architecture Diagram
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "16:9"
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - layout_clarity
+    - connection_accuracy
+    - tier_organization
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: architecture
+  stroke_weight: 2
+  corner_radius: 8
+  icon_style: "line"
+  file_size_limit_kb: 300
+  export_formats:
+    - svg
+    - png
+  palette:
+    primary: "#3B82F6"
+    secondary: "#8B5CF6"
+    accent: "#F59E0B"
+    neutral: "#6B7280"
+    foreground: "#1F2937"
+    background: "#FFFFFF"

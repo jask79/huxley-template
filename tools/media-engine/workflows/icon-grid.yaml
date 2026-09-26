@@ -1,0 +1,58 @@
+name: Icon Grid
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "1:1"
+
+refinement:
+  mode: autonomous
+  max_iterations: 1
+  quality_threshold: 0.90
+  regression_cutoff: true
+  evaluate_criteria:
+    - layer_structure
+    - naming_convention
+    - text_editability
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - pdf
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: icon
+  grid_size: "24x24"
+  stroke_weight: 2
+  corner_radius: 0
+  icon_style: "line"
+  file_size_limit_kb: 100
+  export_formats:
+    - svg
+    - pdf
+    - png

@@ -1,0 +1,395 @@
+# Autonomous Governance Protocol for SDK Workflows
+# Defines decision-making rules for {{ORCHESTRATOR_NAME}} when executing SDK-based automation
+#
+# Version: 1.0.0
+# Last Updated: 2025-10-08
+# Authority: {{ORCHESTRATOR_NAME}} governance framework (CLAUDE.md)
+
+metadata:
+  version: "1.0.0"
+  effective_date: "2025-10-08"
+  review_frequency: "quarterly"
+  authority: "{{ORCHESTRATOR_NAME}} governance framework"
+  scope: "SDK workflow automation decisions"
+
+# =============================================================================
+# RISK CLASSIFICATION FRAMEWORK
+# =============================================================================
+
+risk_levels:
+  green:
+    label: "Auto-Execute"
+    description: "Low risk - safe for autonomous execution without human approval"
+    approval_required: false
+    notification: "log_only"
+    rollback_strategy: "automatic"
+
+  yellow:
+    label: "Queue and Notify"
+    description: "Medium risk - queue for review, notify {{USER_NAME}}, provide recommendation"
+    approval_required: true
+    notification: "macos_notification"
+    rollback_strategy: "automatic"
+
+  red:
+    label: "Block and Alert"
+    description: "High risk - block execution, alert {{USER_NAME}} immediately, require explicit approval"
+    approval_required: true
+    notification: "macos_notification + sound"
+    rollback_strategy: "manual_only"
+
+# =============================================================================
+# GREEN: AUTO-EXECUTE CRITERIA
+# =============================================================================
+
+green_criteria:
+  description: "Operations safe for autonomous execution"
+
+  scope:
+    - single_capsule: true
+      description: "Changes isolated to one capsule only"
+
+    - reversible: true
+      description: "Can be rolled back via transaction pattern"
+
+    - effort_hours: "<4"
+      description: "Estimated completion under 4 hours"
+
+    - external_dependencies: false
+      description: "No external APIs, services, or credentials required"
+
+    - data_modification: "append_only"
+      description: "Only adds data, never modifies/deletes existing state"
+
+  examples:
+    - "Update CLAUDE.md with new learned patterns"
+    - "Run daily audit and log results"
+    - "Validate specs and fix formatting"
+    - "Generate documentation from specs"
+    - "Update context/ files with session notes"
+    - "Sync MCP builder-memory with capsule state"
+    - "Read-only analysis and reporting"
+    - "Log aggregation and summarization"
+
+  exclusions:
+    - "Modifying specs/current.yaml or specs/next.yaml"
+    - "Changing product.yaml or standards.yaml"
+    - "Deleting any files"
+    - "Executing code in production environments"
+    - "Making external API calls"
+
+# =============================================================================
+# YELLOW: QUEUE AND NOTIFY CRITERIA
+# =============================================================================
+
+yellow_criteria:
+  description: "Operations requiring human review before execution"
+
+  scope:
+    - cross_capsule: true
+      description: "Changes affect multiple capsules or shared resources"
+
+    - medium_impact: true
+      description: "Affects system behavior but not catastrophically"
+
+    - spec_modifications: true
+      description: "Updates to specs/current.yaml or specs/next.yaml"
+
+    - tool_modifications: true
+      description: "Changes to tools/ directory scripts"
+
+    - dependency_changes: true
+      description: "Adding/removing dependencies in specs"
+
+  examples:
+    - "Update specs/current.yaml with new architecture decisions"
+    - "Modify specs/next.yaml to plan new features"
+    - "Change product.yaml capabilities or roadmap"
+    - "Update standards.yaml quality gates"
+    - "Add new MCP to capsule .mcp.json"
+    - "Modify tools/ scripts (non-SDK)"
+    - "Cross-capsule pattern propagation"
+    - "Refactor shared utilities"
+
+  notification_format:
+    title: "SDK Workflow Pending Approval"
+    message: "{{ workflow_name }} requires review: {{ summary }}"
+    actions:
+      - label: "Approve"
+        command: "approve_workflow"
+      - label: "Reject"
+        command: "reject_workflow"
+      - label: "Review Details"
+        command: "inspect_workflow"
+
+# =============================================================================
+# RED: BLOCK AND ALERT CRITERIA
+# =============================================================================
+
+red_criteria:
+  description: "Operations blocked - too risky for autonomous execution"
+
+  scope:
+    - system_wide: true
+      description: "Changes affect Huxley framework itself"
+
+    - irreversible: true
+      description: "Cannot be rolled back (deletions, external state changes)"
+
+    - external_spend: true
+      description: "Involves financial transactions or external API costs"
+
+    - credential_access: true
+      description: "Requires API keys, passwords, or sensitive credentials"
+
+    - production_deployment: true
+      description: "Deploys code to production environments"
+
+    - destructive_operations: true
+      description: "Deletes files, drops databases, removes resources"
+
+  examples:
+    - "Delete any capsule or capsule files"
+    - "Modify Huxley framework (CLAUDE.md, agents/, tools/)"
+    - "Deploy to production environments"
+    - "Purchase services or make external payments"
+    - "Access or modify credential files (.env, .secrets)"
+    - "Drop databases or delete production data"
+    - "Modify git history or force push"
+    - "Change system-level configurations"
+    - "Execute code with sudo/elevated privileges"
+
+  alert_format:
+    title: "⚠️ SDK Workflow BLOCKED"
+    message: "HIGH RISK: {{ workflow_name }} attempted {{ operation }}"
+    sound: "Basso"
+    critical: true
+
+# =============================================================================
+# DECISION TREE
+# =============================================================================
+
+decision_tree:
+  description: "Sequential evaluation for risk classification"
+
+  steps:
+    - step: 1
+      question: "Does operation involve deletion, external spend, or credentials?"
+      if_yes: "RED"
+      if_no: "continue"
+
+    - step: 2
+      question: "Does operation modify Huxley framework or production systems?"
+      if_yes: "RED"
+      if_no: "continue"
+
+    - step: 3
+      question: "Does operation modify specs, product.yaml, or standards.yaml?"
+      if_yes: "YELLOW"
+      if_no: "continue"
+
+    - step: 4
+      question: "Does operation affect multiple capsules or shared tools?"
+      if_yes: "YELLOW"
+      if_no: "continue"
+
+    - step: 5
+      question: "Is operation reversible, <4h, single-capsule, no external deps?"
+      if_yes: "GREEN"
+      if_no: "YELLOW"
+
+# =============================================================================
+# WORKFLOW-SPECIFIC OVERRIDES
+# =============================================================================
+
+workflow_overrides:
+  description: "Specific risk levels for known workflows"
+
+  daily_audit:
+    risk_level: "green"
+    rationale: "Read-only analysis, logs to registry/"
+
+  spec_validation:
+    risk_level: "green"
+    rationale: "Validation only, no modifications"
+
+  context_update:
+    risk_level: "green"
+    rationale: "Appends to context/, reversible"
+    conditions:
+      - "only appends new files"
+      - "never modifies existing context"
+
+  spec_update:
+    risk_level: "yellow"
+    rationale: "Modifies specs/current.yaml - requires review"
+
+  mcp_provision:
+    risk_level: "yellow"
+    rationale: "Modifies .mcp.json - affects tool availability"
+
+  capsule_delete:
+    risk_level: "red"
+    rationale: "Irreversible deletion"
+
+  production_deploy:
+    risk_level: "red"
+    rationale: "External deployment, irreversible"
+
+# =============================================================================
+# ESCALATION PROCEDURES
+# =============================================================================
+
+escalation:
+  green_to_yellow:
+    trigger: "Operation takes >4h or encounters unexpected complexity"
+    action: "Pause, notify {{USER_NAME}}, await approval to continue"
+
+  green_to_red:
+    trigger: "Operation requires credentials or external API unexpectedly"
+    action: "Halt immediately, alert {{USER_NAME}}, require explicit approval"
+
+  yellow_timeout:
+    threshold_hours: 24
+    action: "Auto-reject if no response within 24 hours"
+    notification: "Send reminder at 12h and 23h marks"
+
+  red_override:
+    allowed: false
+    rationale: "RED operations never auto-execute, even with timeout"
+
+# =============================================================================
+# VALIDATION GATES
+# =============================================================================
+
+validation_gates:
+  pre_execution:
+    - check: "Risk classification completed"
+      required: true
+
+    - check: "Transaction snapshot created"
+      required: true
+      required_for: ["yellow", "green"]
+
+    - check: "Approval obtained (if required)"
+      required: true
+      required_for: ["yellow", "red"]
+
+    - check: "Capsule navigation verified"
+      required: true
+
+  post_execution:
+    - check: "Hook validation passed"
+      required: true
+      on_failure: "rollback"
+
+    - check: "MCP state synchronized"
+      required: true
+      on_failure: "warning"
+
+    - check: "Audit log written"
+      required: true
+      on_failure: "warning"
+
+# =============================================================================
+# MONITORING AND REPORTING
+# =============================================================================
+
+monitoring:
+  metrics:
+    - "Total workflows executed per day"
+    - "Green/Yellow/Red distribution"
+    - "Average execution time per risk level"
+    - "Rollback frequency"
+    - "Approval response time (Yellow workflows)"
+
+  reporting:
+    frequency: "weekly"
+    recipients: ["{{USER_NAME}}"]
+    format: "markdown_summary"
+    location: "registry/sdk_governance_report.md"
+
+  alerts:
+    red_blocked:
+      immediate: true
+      channels: ["macos_notification", "log"]
+
+    yellow_pending:
+      delay_minutes: 0
+      channels: ["macos_notification"]
+
+    green_completed:
+      immediate: false
+      channels: ["log"]
+
+# =============================================================================
+# AUDIT LOGGING
+# =============================================================================
+
+audit:
+  location: "registry/sdk_workflow_audit.log"
+  format: "json_lines"
+  retention_days: 90
+
+  required_fields:
+    - workflow_id
+    - workflow_name
+    - risk_level
+    - classification_reason
+    - execution_start
+    - execution_end
+    - status
+    - capsule
+    - modifications
+    - approval_status
+    - rollback_triggered
+
+  sensitive_data_handling:
+    redact: true
+    patterns:
+      - "[PRIVATE]"
+      - "password"
+      - "api_key"
+      - "secret"
+
+# =============================================================================
+# EMERGENCY PROCEDURES
+# =============================================================================
+
+emergency:
+  kill_switch:
+    command: "pkill -f 'sdk_workflow'"
+    description: "Immediately terminate all SDK workflows"
+    requires_confirmation: true
+
+  rollback_all:
+    command: "tools/sdk/emergency_rollback.sh"
+    description: "Rollback all active transactions"
+    scope: "all_capsules"
+
+  pause_automation:
+    command: "touch ~/.cache/catalyst/sdk_paused"
+    description: "Pause all SDK workflow automation"
+    resume_command: "rm ~/.cache/catalyst/sdk_paused"
+
+# =============================================================================
+# REVIEW AND UPDATES
+# =============================================================================
+
+governance_review:
+  quarterly_review:
+    - "Analyze risk classification accuracy"
+    - "Review escalation frequency"
+    - "Update criteria based on learned patterns"
+    - "Adjust thresholds if needed"
+
+  triggers_for_update:
+    - "5+ incorrect classifications in a week"
+    - "3+ emergency rollbacks in a month"
+    - "Approval response time >12h average"
+    - "Major Huxley framework changes"
+
+  approval_authority:
+    - "The Big 3 (BOSS, System Architect, {{ORCHESTRATOR_NAME}}) for framework changes"
+    - "System Architect + {{ORCHESTRATOR_NAME}} for capsule-specific rules"
+    - "{{ORCHESTRATOR_NAME}} for criteria adjustments within existing framework"

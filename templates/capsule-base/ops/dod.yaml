@@ -1,0 +1,82 @@
+# Definition of Done Criteria Template
+
+# Lane-specific DoD requirements
+standard:
+  core:
+    - "Functionality works as specified"
+    - "Basic error handling implemented"
+    - "README with setup instructions"
+    
+  quality:
+    - "Code runs without critical errors"
+    - "Basic input validation"
+    - "Minimal documentation"
+    
+  testing:
+    - "Manual testing completed"
+    - "Happy path verified"
+    
+  deployment:
+    - "Deployable to local environment"
+
+standard:
+  core:
+    - "All functional requirements met"
+    - "Comprehensive error handling"
+    - "Complete documentation suite"
+    - "API documentation (if applicable)"
+    
+  quality:
+    - "Code review completed"
+    - "Security scan passed"
+    - "Performance benchmarks met"
+    - "Accessibility compliance (if applicable)"
+    
+  testing:
+    - "Unit test coverage >80%"
+    - "Integration tests passing"
+    - "End-to-end tests (if applicable)"
+    - "Load testing (if applicable)"
+    
+  security:
+    - "Security audit completed"
+    - "Vulnerability scan passed"
+    - "Authentication/authorization tested"
+    - "Input sanitization verified"
+    
+  performance:
+    - "Performance benchmarks documented"
+    - "Load testing results acceptable"
+    - "Memory usage optimized"
+    - "Response times within SLA"
+    
+  deployment:
+    - "Staging deployment successful"
+    - "Production deployment guide"
+    - "Rollback procedure documented"
+    - "Monitoring and alerting configured"
+    
+  compliance:
+    - "Coding standards followed"
+    - "License compliance verified"
+    - "Data protection requirements met"
+    - "Audit trail maintained"
+
+# Branch-specific additions
+automation:
+  - "Error handling for all failure modes"
+  - "Logging and monitoring configured"
+  - "Rollback mechanism available"
+
+web:
+  - "Cross-browser compatibility tested"
+  - "Responsive design verified"
+  - "SEO optimization (if applicable)"
+
+app:
+  - "Platform-specific guidelines followed"
+  - "App store requirements met (if applicable)"
+  - "Device compatibility tested"
+
+# Custom DoD criteria for specific domains
+custom: []

@@ -1,0 +1,73 @@
+# Enhanced Capsule Metadata for Agent Routing
+
+# Core identification
+name: "{{APP_NAME}}"
+slug: "{{APP_SLUG}}"
+version: "0.1.0"
+created: "{{CREATION_DATE}}"
+
+# Routing configuration  
+routing:
+  branch: "apple"                # automation, web, app, backend, ops
+  targets: ["ios", "macos", "swift", "swiftui", "xcode"]  # Apple platform technologies
+  priority: "normal"             # low, normal, high, critical
+  auto_xcode: true               # CRITICAL: Automatically create Xcode projects
+
+# Agent preferences  
+agents:
+  primary: ["iOS Dev", "macos-specialist"]        # Main agents for this capsule
+  secondary: ["security-auditor", "test-automator"]      # Supporting agents
+  exclude: []                                             # Agents to avoid
+  auto_behaviors:
+    xcode_creation: "mandatory"  # Agents MUST create Xcode projects automatically
+
+# MCP configuration
+mcp:
+  profile: "apple"     # default, webdev, automation, apple
+  additional: []                  # Extra MCP servers needed
+  exclude: []                     # MCP servers to exclude
+
+# Quality gates
+quality:
+  dod_level: "comprehensive"     # minimal, standard, comprehensive
+  test_coverage: "80"  # 0-100
+  security_scan: "true"  # true/false
+  performance_benchmark: "true"  # true/false
+
+# Context and domain
+domain:
+  type: "business"        # business, personal, experimental
+  category: "mobile-app"       # automation, web-app, mobile-app, etc.
+  complexity: "medium"   # simple, medium, complex
+  stakeholders: ["{{STAKEHOLDERS}}"]
+
+# Integration points
+integrations:
+  external_apis: []
+  databases: []
+  cloud_services: []
+  third_party_tools: []
+
+# Deployment and lifecycle
+deployment:
+  targets: ["{{DEPLOY_TARGETS}}"]     # local, staging, production
+  automation: "{{DEPLOY_AUTO}}"       # manual, semi, full
+  rollback_strategy: "{{ROLLBACK}}"   # none, manual, auto
+
+# Resource requirements
+resources:
+  estimated_hours: "{{EST_HOURS}}"
+  team_size: "{{TEAM_SIZE}}"
+  budget: "{{BUDGET}}"
+  deadline: "{{DEADLINE}}"
+
+# Tags for discovery and organization
+tags: ["{{TAGS}}"]
+
+# Huxley metadata
+builder:
+  template_version: "2.0"
+  created_by_template: "apple-app-starter"
+  routing_version: "1.0"
+  mcp_version: "1.0"
+  xcode_pipeline: "automatic"  # Enforces automatic Xcode project creation

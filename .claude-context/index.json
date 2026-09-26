@@ -1,0 +1,75 @@
+{
+  "version": "1.0.0",
+  "schema_version": "1.1",
+  "generated_at": "2026-09-24T00:00:00Z",
+  "description": "Manual lazy-loading index. {{ORCHESTRATOR_NAME}} reads sections on-demand via Read tool when topics match load_triggers. Claude Code loads main CLAUDE.md at session start; this index guides when to load additional context files.",
+  "loading_mechanism": "manual",
+  "note": "{{ORCHESTRATOR_NAME}} checks load_triggers against user queries and loads relevant sections. This is NOT automatic - {{ORCHESTRATOR_NAME}} must actively use Read tool on the referenced files. agent_affinity enables predictive pre-loading when delegating to specific specialists.",
+  "sections": {
+    "core": {
+      "file": "CLAUDE.md",
+      "description": "Core {{ORCHESTRATOR_NAME}} identity, protocols, and system purpose - ALWAYS LOADED",
+      "load_trigger": "session_start",
+      "agent_affinity": ["all"],
+      "priority": 1
+    },
+    "architecture": {
+      "file": ".claude-context/CLAUDE-architecture.md",
+      "description": "System patterns, capsule structure, agent overview",
+      "load_trigger": ["architecture", "capsule structure", "system pattern"],
+      "agent_affinity": ["Backend Developer", "Frontend Developer", "System Architect", "Mobile Developer", "MCP Server Dude"],
+      "priority": 3
+    },
+    "operating": {
+      "file": ".claude-context/CLAUDE-operating.md",
+      "description": "Operating specifications, completion requirements, cost analysis",
+      "load_trigger": ["specs", "validation", "cost analysis", "completion"],
+      "agent_affinity": ["Code Reviewer", "Validator", "Business Analyst", "Venture Analyst"],
+      "priority": 4
+    },
+    "integrations": {
+      "file": ".claude-context/CLAUDE-integrations.md",
+      "description": "Memory, TaskMaster, API keys, Codex consultation, Apple provisioning, browser automation, workflow automation",
+      "load_trigger": ["memory", "taskmaster", "api key", "codex", "browser", "n8n", "workflow", "apple provision"],
+      "agent_affinity": ["Backend Developer", "Mobile Developer", "Automator", "Debugger", "MCP Server Dude", "Bowser"],
+      "priority": 5
+    },
+    "navigation": {
+      "file": ".claude-context/CLAUDE-navigation.md",
+      "description": "Capsule navigation intelligence and auto-navigation protocol",
+      "load_trigger": ["navigate", "capsule", "nav_with_context"],
+      "agent_affinity": ["all"],
+      "priority": 2
+    },
+    "orchestration": {
+      "file": ".claude-context/CLAUDE-orchestration.md",
+      "description": "Core agent routing, specialist mapping, parallel execution, {{ORCHESTRATOR_NAME}}-owned tools, external issue workflow",
+      "load_trigger": ["route", "agent", "specialist", "delegate", "coordinate", "parallel", "pipeline"],
+      "agent_affinity": ["all"],
+      "priority": 2
+    },
+    "orchestration-extended": {
+      "file": ".claude-context/CLAUDE-orchestration-extended.md",
+      "description": "Agent Teams protocol, Mesh coordination, Named Clusters, Assembly Mode framework, Collaboration Learning Loop, Pipeline Playbooks",
+      "load_trigger": ["agent team", "team", "swarm", "mesh", "mesh coordinator", "collaboration", "named cluster", "assembly mode", "landing page pipeline", "pipeline playbook", "team lifecycle"],
+      "agent_affinity": ["all"],
+      "priority": 4
+    },
+    "strategy": {
+      "file": ".claude-context/CLAUDE-strategy.md",
+      "description": "Owner strategy template: north star, revenue priorities, decision principles, portfolio map, learning protocol",
+      "load_trigger": ["portfolio", "strategic", "learning", "north star", "owner preference", "priorities"],
+      "agent_affinity": ["Venture Analyst", "Business Analyst", "Product Strategist", "CMO", "Brand Specialist", "BOSS"],
+      "priority": 3
+    }
+  },
+  "fallback": {
+    "enabled": true,
+    "description": "If any section fails to load or parse, fall back to full CLAUDE.md",
+    "full_file_path": "CLAUDE.md"
+  },
+  "guards": {
+    "heading_validation": true,
+    "description": "Validate section headings match expected patterns before loading"
+  }
+}

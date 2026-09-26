@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.huxley.taskdashboard</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>cd {{CATALYST_ROOT}}/tools/task_dashboard &amp;&amp; npm run dev</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>{{HOME_DIR}}/Library/Logs/catalyst-taskdashboard.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{{HOME_DIR}}/Library/Logs/catalyst-taskdashboard.error.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>{{CATALYST_ROOT}}/tools/task_dashboard</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+        <key>NODE_ENV</key>
+        <string>development</string>
+    </dict>
+</dict>
+</plist>

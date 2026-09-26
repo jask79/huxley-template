@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Wrapper that auto-loads Huxley context when launched from within
+# the Catalyst root (or $CATALYST_ROOT). Falls back to real codex otherwise.
+
+# Resolve real codex binary (not this wrapper)
+SELF_PATH="$(python3 - <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+"$0")"
+
+REAL_CODEX=""
+while IFS= read -r line; do
+  path=$(python3 - <<'PY'
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+"$line")
+  if [[ "$path" != "$SELF_PATH" ]]; then
+    REAL_CODEX="$line"
+    break
+  fi
+done < <(which -a codex)
+
+if [[ -z "$REAL_CODEX" ]]; then
+  echo "ERROR: Could not locate the real 'codex' binary in PATH." >&2
+  exit 1
+fi
+
+# Apply safe default heap unless caller provided one
+if [[ -z "${NODE_OPTIONS:-}" ]]; then
+  export NODE_OPTIONS="--max-old-space-size=8192"
+fi
+
+# Determine Huxley root and if we're inside it
+DEFAULT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="${CATALYST_ROOT:-$DEFAULT_ROOT}"
+
+inside_builder=false
+case "${PWD%/}/" in
+  "${ROOT_DIR%/}/"* ) inside_builder=true ;;
+esac
+
+# If no args and inside Huxley, inject context as the prompt
+if $inside_builder && [[ $# -eq 0 ]]; then
+  prompt() {
+    echo "Huxley unified context. You are Codex working in $PWD."
+    echo
+    if [[ -f "$ROOT_DIR/PROJECT_COMPASS_Huxley.md" ]]; then
+      echo "## Project Compass (Authoritative)"
+      cat "$ROOT_DIR/PROJECT_COMPASS_Huxley.md"
+      echo
+      echo "---"
+    fi
+    if [[ -f "$ROOT_DIR/CLAUDE.md" ]]; then
+      echo
+      echo "## Claude Code System Context"
+      cat "$ROOT_DIR/CLAUDE.md"
+      echo
+      echo "---"
+    fi
+  }
+  PROMPT_CONTENT="$(prompt)"
+  exec "$REAL_CODEX" "$PROMPT_CONTENT"
+fi
+
+# Otherwise, pass through unchanged
+exec "$REAL_CODEX" "$@"

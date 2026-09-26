@@ -1,0 +1,37 @@
+# Example: Per-capsule media config override
+# Place as media-config.yaml in your capsule directory
+#
+# Usage:
+#   python3 tools/media-engine/cli.py generate \
+#     --workflow product-photography \
+#     --capsule capsules/example-capsule/media-config.yaml \
+#     --prompt "Ceramic coffee mug on a walnut desk, studio lighting"
+
+extends: workflows/product-photography
+profile: high-fidelity
+
+overrides:
+  model: google/gemini-3-pro-image-preview
+
+  consistency:
+    reference_images: 8
+    style_weight: 0.9
+    character_lock: false
+
+  refinement:
+    mode: agent_in_loop
+    max_iterations: 6
+    quality_threshold: 0.88
+    evaluate_criteria:
+      - material_texture_realism
+      - color_accuracy
+      - surface_lighting
+      - brand_alignment
+      - text_legibility
+
+  output:
+    directory: "capsules/example-capsule/generated/{date}/"
+    naming: "product-{sequence}-{resolution}"
+    formats:
+      - png
+      - webp

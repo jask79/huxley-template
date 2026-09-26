@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1
+# BuildKit-optimized Dockerfile for Claude Router
+
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files first for layer caching
+COPY package*.json ./
+
+# Install dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci && \
+    npm cache clean --force
+
+# Production stage
+FROM node:20-alpine AS production
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package*.json ./
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN addgroup -g 1000 catalyst && \
+    adduser -D -u 1000 -G catalyst catalyst && \
+    chown -R catalyst:catalyst /app
+
+USER catalyst
+
+# Expose port
+EXPOSE 3456
+
+# Run the application
+CMD ["node", "src/server.js"]

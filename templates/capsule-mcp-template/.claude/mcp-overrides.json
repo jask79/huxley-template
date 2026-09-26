@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "description": "Capsule-specific MCP overrides template",
+  "capsule_name": "${CAPSULE_NAME}",
+  "servers": {
+    "shopify-mcp": {
+      "command": "npx",
+      "args": ["-y", "@shopify/mcp-server"],
+      "env": {
+        "SHOPIFY_STORE": "${SHOPIFY_STORE}",
+        "SHOPIFY_ACCESS_TOKEN": "${SHOPIFY_ACCESS_TOKEN}"
+      },
+      "scope": "capsule",
+      "category": "ecommerce",
+      "description": "Shopify store management for this capsule only"
+    },
+    "database-mcp": {
+      "command": "npx", 
+      "args": ["-y", "@database/mcp-server"],
+      "env": {
+        "DATABASE_URL": "${CAPSULE_DATABASE_URL}"
+      },
+      "scope": "capsule",
+      "category": "data",
+      "description": "Database access scoped to this capsule"
+    }
+  },
+  "roles": {
+    "frontend-specialist": {
+      "allowedServers": ["shopify-mcp", "shadcn-ui"],
+      "mode": "read",
+      "overrides": {
+        "shopify-mcp": "write"
+      }
+    },
+    "data-analyst": {
+      "allowedServers": ["database-mcp"],
+      "mode": "read"
+    }
+  },
+  "security": {
+    "audit_all_operations": true,
+    "require_approval": ["database-mcp:write", "shopify-mcp:write"],
+    "rate_limits": {
+      "shopify-mcp": {
+        "requests_per_minute": 30,
+        "requests_per_hour": 1000
+      }
+    }
+  },
+  "last_modified": "2025-08-12T00:00:00Z"
+}

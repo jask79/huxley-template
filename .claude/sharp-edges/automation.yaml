@@ -1,0 +1,218 @@
+# Automation Sharp Edges
+# Production gotchas for n8n workflows, macOS scripting, and automation
+
+edges:
+  # === CRITICAL: Security ===
+
+  - id: credential_in_workflow
+    severity: critical
+    category: security
+    pattern: "Hardcoded credentials in n8n workflow"
+    detection:
+      - type: regex
+        value: '"value":\s*"(?:sk-|ghp_|xoxb-|password|secret)'
+        files: ["*.json"]
+    why: "Credentials in workflow JSON can be exported and exposed"
+    fix: "Use n8n credentials manager, never hardcode secrets"
+    tags: ["n8n", "credentials"]
+
+  - id: shell_injection_applescript
+    severity: critical
+    category: security
+    pattern: "AppleScript shell command with unescaped input"
+    detection:
+      - type: regex
+        value: 'do shell script.*&|do shell script\s+"[^"]*"\s*&\s*\w+'
+        files: ["*.applescript", "*.scpt"]
+    why: "Unescaped shell commands allow injection attacks"
+    fix: "Use quoted form of for user input"
+    examples:
+      bad: |
+        do shell script "rm " & filePath
+      good: |
+        do shell script "rm " & quoted form of filePath
+    tags: ["applescript", "injection"]
+
+  - id: webhook_no_auth
+    severity: critical
+    category: security
+    pattern: "n8n webhook without authentication"
+    detection:
+      - type: regex
+        value: '"authentication":\s*"none".*"httpMethod"'
+        files: ["*.json"]
+    why: "Unauthenticated webhooks can be triggered by anyone"
+    fix: "Enable header or basic auth on webhooks"
+    tags: ["n8n", "webhooks"]
+
+  # === WARNING: Reliability ===
+
+  - id: missing_error_handling_n8n
+    severity: warning
+    category: reliability
+    pattern: "n8n workflow without error handling"
+    detection:
+      - type: semantic
+        description: "Workflow lacks Error Trigger or try/catch nodes"
+    why: "Failed workflows disappear silently without error handling"
+    fix: "Add Error Trigger node with notification"
+    tags: ["n8n", "error-handling"]
+
+  - id: infinite_loop_risk
+    severity: warning
+    category: reliability
+    pattern: "Workflow that could trigger itself"
+    detection:
+      - type: semantic
+        description: "Webhook trigger with HTTP Request that POSTs to same endpoint"
+    why: "Self-triggering workflows can loop infinitely"
+    fix: "Add guard conditions or use different endpoints"
+    tags: ["n8n", "loops"]
+
+  - id: missing_timeout_http
+    severity: warning
+    category: reliability
+    pattern: "HTTP Request node without timeout"
+    detection:
+      - type: regex
+        value: '"type":\s*"n8n-nodes-base\.httpRequest"(?!.*timeout)'
+        files: ["*.json"]
+    why: "HTTP requests can hang indefinitely without timeout"
+    fix: "Set timeout in HTTP Request node options"
+    tags: ["n8n", "timeout"]
+
+  - id: applescript_app_not_running
+    severity: warning
+    category: reliability
+    pattern: "AppleScript targeting app without running check"
+    detection:
+      - type: regex
+        value: 'tell application "[^"]+"(?!\s*\n\s*if.*running)'
+        files: ["*.applescript", "*.scpt"]
+    why: "Script fails if target app isn't running"
+    fix: "Check if app is running before sending commands"
+    examples:
+      bad: |
+        tell application "Music"
+            play
+        end tell
+      good: |
+        if application "Music" is running then
+            tell application "Music"
+                play
+            end tell
+        end if
+    tags: ["applescript", "reliability"]
+
+  # === WARNING: Performance ===
+
+  - id: polling_instead_of_webhook
+    severity: info
+    category: performance
+    pattern: "Polling trigger for webhook-capable service"
+    detection:
+      - type: semantic
+        description: "Using Schedule Trigger to poll API that supports webhooks"
+    why: "Polling wastes resources; webhooks are more efficient"
+    fix: "Use webhook triggers when available"
+    tags: ["n8n", "efficiency"]
+
+  - id: large_data_in_memory
+    severity: warning
+    category: performance
+    pattern: "Processing large dataset in single execution"
+    detection:
+      - type: semantic
+        description: "Workflow fetches all records without pagination"
+    why: "Large datasets can exhaust memory and timeout"
+    fix: "Implement pagination or batch processing"
+    tags: ["n8n", "memory"]
+
+  - id: synchronous_file_operations
+    severity: warning
+    category: performance
+    pattern: "Synchronous file I/O in automation script"
+    detection:
+      - type: regex
+        value: '(?:readFileSync|writeFileSync|execSync)'
+        files: ["*.js", "*.ts"]
+    why: "Sync operations block event loop, causing timeouts"
+    fix: "Use async versions: readFile, writeFile, exec"
+    tags: ["nodejs", "async"]
+
+  # === WARNING: Data Handling ===
+
+  - id: pii_in_logs
+    severity: warning
+    category: security
+    pattern: "Logging sensitive data in automation"
+    detection:
+      - type: regex
+        value: 'console\.log.*(?:email|phone|ssn|password|token)'
+        files: ["*.js", "*.ts"]
+    why: "PII in logs violates privacy regulations"
+    fix: "Mask or omit sensitive fields from logs"
+    tags: ["privacy", "logging"]
+
+  - id: missing_data_validation
+    severity: warning
+    category: correctness
+    pattern: "Webhook data used without validation"
+    detection:
+      - type: semantic
+        description: "Webhook payload fields accessed without type checking"
+    why: "Invalid webhook data causes runtime errors"
+    fix: "Validate and sanitize all webhook inputs"
+    tags: ["validation", "webhooks"]
+
+  # === INFO: Best Practices ===
+
+  - id: hardcoded_paths
+    severity: info
+    category: maintainability
+    pattern: "Hardcoded file paths in automation"
+    detection:
+      - type: regex
+        value: '"/Users/\w+/|"C:\\\\Users\\\\'
+        files: ["*.js", "*.ts", "*.applescript", "*.json"]
+    why: "Hardcoded paths break when moved to different machine"
+    fix: "Use environment variables or config files"
+    examples:
+      bad: |
+        const dataPath = "/Users/alice/data/file.json"
+      good: |
+        const dataPath = path.join(process.env.DATA_DIR, "file.json")
+    tags: ["portability", "config"]
+
+  - id: missing_retry_logic
+    severity: info
+    category: reliability
+    pattern: "External API call without retry"
+    detection:
+      - type: semantic
+        description: "HTTP call without retry on transient failures"
+    why: "Transient failures cause unnecessary workflow failures"
+    fix: "Configure retry settings in HTTP nodes"
+    tags: ["reliability", "retry"]
+
+  - id: no_workflow_documentation
+    severity: info
+    category: maintainability
+    pattern: "n8n workflow without description or sticky notes"
+    detection:
+      - type: semantic
+        description: "Workflow lacks description field or documentation nodes"
+    why: "Undocumented workflows are hard to maintain"
+    fix: "Add workflow description and Sticky Note nodes explaining logic"
+    tags: ["documentation", "n8n"]
+
+  - id: cron_overlap_risk
+    severity: warning
+    category: reliability
+    pattern: "Schedule trigger without execution lock"
+    detection:
+      - type: semantic
+        description: "Scheduled workflow that runs longer than its interval"
+    why: "Overlapping executions can cause data corruption"
+    fix: "Add execution locking or increase interval"
+    tags: ["scheduling", "concurrency"]

@@ -1,0 +1,55 @@
+# Email Account Registry — EXAMPLE
+# Central source of truth for all of your email accounts across all providers.
+# Copy to email-registry.yaml and replace the example entries with your own.
+# Managed via: python3 tools/email-registry/cli.py
+#
+# Field reference:
+#   provider:        gmail | google-workspace | resend | custom-domain | proton | icloud | fastmail
+#   type:            personal | business | service | public
+#                    personal = your own account; business = company account;
+#                    service  = transactional/system sender; public = public-facing contact
+#   purpose:         Human-readable description of what this account is used for
+#   capsule:         Capsule name (or null for global/personal accounts)
+#   google_admin:    Google Workspace admin email for this account (or null)
+#   login_method:    oauth | password | app-password | api-key | null
+#   2fa:             true | false | none | null (null = unknown)
+#   recovery_email:  Recovery address configured on this account (or null)
+#   status:          active | inactive | deprecated
+#   consolidation:   keep | merge | retire | null
+#                    keep = definitely keeping; merge = should consolidate into another;
+#                    retire = plan to shut down; null = undecided
+#   notes:           Free-text notes (or null)
+
+# ============================================================
+# EXAMPLE — Personal account
+# ============================================================
+
+you@example.com:
+  provider: gmail
+  type: personal
+  purpose: "EXAMPLE — primary personal account (replace me)"
+  capsule: null
+  google_admin: null
+  login_method: oauth
+  2fa: true
+  recovery_email: null
+  status: active
+  consolidation: keep
+  notes: null
+
+# ============================================================
+# EXAMPLE — Business account tied to a capsule
+# ============================================================
+
+hello@acme-widgets.example:
+  provider: google-workspace
+  type: business
+  purpose: "EXAMPLE — business email for the acme-widgets capsule (replace me)"
+  capsule: example-capsule
+  google_admin: you@example.com
+  login_method: oauth
+  2fa: true
+  recovery_email: you@example.com
+  status: active
+  consolidation: keep
+  notes: null

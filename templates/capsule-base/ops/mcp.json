@@ -1,0 +1,10 @@
+{
+  "profile": "{{MCP_PROFILE}}",
+  "include": [
+    "{{ADDITIONAL_MCP_1}}",
+    "{{ADDITIONAL_MCP_2}}"
+  ],
+  "exclude": [
+    "{{EXCLUDE_MCP_1}}"
+  ]
+}

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<!--
+  com.huxley.youtube-intel-poller.plist
+  =========================================
+  macOS LaunchAgent for YouTube Intel VPH automated polling.
+  Runs hourly — at minute 0 of every hour.
+
+  INSTALL (run once; persists across reboots):
+  --------------------------------------------
+    cp tools/youtube-intel/com.huxley.youtube-intel-poller.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.huxley.youtube-intel-poller.plist
+
+  VERIFY:
+    launchctl list | grep youtube-intel
+
+  UNINSTALL:
+    launchctl unload ~/Library/LaunchAgents/com.huxley.youtube-intel-poller.plist
+    rm ~/Library/LaunchAgents/com.huxley.youtube-intel-poller.plist
+
+  MANUAL TEST (fire immediately without waiting for schedule):
+    launchctl start com.huxley.youtube-intel-poller
+
+  LOGS:
+    tail -f {{CATALYST_ROOT}}/logs/youtube-intel-poller.log
+    tail -f {{CATALYST_ROOT}}/logs/youtube-intel-poller.err
+
+  TROUBLESHOOTING:
+  ----------------
+  - "Service is disabled":
+      launchctl enable gui/$(id -u)/com.huxley.youtube-intel-poller
+  - Keychain access denied: The first run may trigger a Keychain access prompt.
+      Approve it and check "Always Allow" so future runs are unattended.
+  - Service account missing: Check Keychain entries
+      'google-service-account-client-email' and 'google-service-account-private-key'
+  - Database missing: Run
+      sqlite3 {{CATALYST_ROOT}}/monitoring/youtube-intel.db < {{CATALYST_ROOT}}/tools/youtube-intel/schema.sql
+  - Manual poll from CLI:
+      python3 {{CATALYST_ROOT}}/tools/youtube-intel/cli.py poller run
+      python3 {{CATALYST_ROOT}}/tools/youtube-intel/cli.py poller status
+-->
+
+<plist version="1.0">
+<dict>
+
+    <!-- ===== AGENT IDENTITY ===== -->
+    <key>Label</key>
+    <string>com.huxley.youtube-intel-poller</string>
+
+    <!-- ===== PROGRAM ===== -->
+    <key>ProgramArguments</key>
+    <array>
+        <!-- Homebrew Python 3 — matches the project's Python installation -->
+        <string>/usr/bin/env</string>
+        <string>python3</string>
+        <string>{{CATALYST_ROOT}}/tools/youtube-intel/poller.py</string>
+        <string>--mode</string>
+        <string>vph</string>
+    </array>
+
+    <!-- ===== SCHEDULE: Every hour, on the hour ===== -->
+    <!--
+        StartCalendarInterval with Minute=0 fires at XX:00 every hour.
+        If the Mac is asleep when the trigger fires, launchd skips that
+        invocation — correct behavior for VPH polling (missed snapshot
+        is preferable to a backlog of stale ones).
+    -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- ===== WORKING DIRECTORY ===== -->
+    <key>WorkingDirectory</key>
+    <string>{{CATALYST_ROOT}}</string>
+
+    <!-- ===== STANDARD I/O — separate stdout and stderr logs ===== -->
+    <key>StandardOutPath</key>
+    <string>{{CATALYST_ROOT}}/logs/youtube-intel-poller.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{{CATALYST_ROOT}}/logs/youtube-intel-poller.err</string>
+
+    <!-- ===== ENVIRONMENT ===== -->
+    <!--
+        HOME is required so the `security` CLI can locate the login Keychain.
+        PATH ensures python3 can find system tools if called via subprocess.
+    -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>{{HOME_DIR}}</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <!-- ===== BEHAVIOR FLAGS ===== -->
+    <!-- Don't run immediately on load — wait for next scheduled hour -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Do NOT restart on failure — a bad token or API error shouldn't loop -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <!-- Throttle: don't restart more than once per 300 seconds if it crashes -->
+    <key>ThrottleInterval</key>
+    <integer>300</integer>
+
+    <!-- Nice level: low priority, don't compete with foreground work -->
+    <key>ProcessType</key>
+    <string>Background</string>
+
+</dict>
+</plist>
+
+<!--
+=============================================================================
+COMPANION PLIST — Competitor Poller (daily at 6 AM)
+=============================================================================
+Save this as a SEPARATE file and install independently:
+  ~/Library/LaunchAgents/com.huxley.youtube-intel-poller-competitors.plist
+
+Install:
+  cp tools/youtube-intel/com.huxley.youtube-intel-poller-competitors.plist ~/Library/LaunchAgents/
+  launchctl load ~/Library/LaunchAgents/com.huxley.youtube-intel-poller-competitors.plist
+
+---BEGIN COMPANION PLIST---
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.huxley.youtube-intel-poller-competitors</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/env</string>
+        <string>python3</string>
+        <string>{{CATALYST_ROOT}}/tools/youtube-intel/poller.py</string>
+        <string>--mode</string>
+        <string>competitors</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>6</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>{{CATALYST_ROOT}}</string>
+
+    <key>StandardOutPath</key>
+    <string>{{CATALYST_ROOT}}/logs/youtube-intel-poller.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{{CATALYST_ROOT}}/logs/youtube-intel-poller.err</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>{{HOME_DIR}}</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>ThrottleInterval</key>
+    <integer>300</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
+---END COMPANION PLIST---
+-->

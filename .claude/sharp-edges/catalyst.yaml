@@ -1,0 +1,131 @@
+# Huxley System Sharp Edges
+# Codebase-specific gotchas unique to Huxley architecture and conventions
+
+edges:
+  # === CRITICAL: System Invariants ===
+
+  - id: file_in_catalyst_root
+    severity: critical
+    category: correctness
+    pattern: "File created in Huxley root directory"
+    detection:
+      - type: semantic
+        description: "New file written directly to {{CATALYST_ROOT}}/ instead of a subdirectory"
+    why: "Root is reserved for system config only (CLAUDE.md). Agent output must go to the correct subdirectory per the file placement rules."
+    fix: "Route to correct directory: scripts/, archive/reports/, testing/, capsules/<name>/, tools/, etc."
+    tags: ["catalyst-convention", "file-placement"]
+
+  - id: hardcoded_port
+    severity: critical
+    category: correctness
+    pattern: "Hardcoded port number not from port registry"
+    detection:
+      - type: regex
+        value: "(?:port|PORT|listen|LISTEN)\\s*[=:]\\s*\\d{4,5}"
+        files: ["*.py", "*.ts", "*.js", "*.yaml", "*.yml", "*.json", "*.env"]
+      - type: regex
+        value: "localhost:\\d{4,5}|127\\.0\\.0\\.1:\\d{4,5}|0\\.0\\.0\\.0:\\d{4,5}"
+        files: ["*.py", "*.ts", "*.js", "*.yaml", "*.yml"]
+    why: "All ports must come from global/config/port-registry.yaml. Ad-hoc port picks cause conflicts."
+    fix: "Check port-registry.yaml for the assigned port. If new service, register it first."
+    tags: ["catalyst-convention", "port-registry"]
+
+  - id: direct_env_secret
+    severity: critical
+    category: security
+    pattern: "Secret read from .env or environment variable instead of Keychain"
+    detection:
+      - type: regex
+        value: "os\\.environ\\.get\\([\"'](?!VITE_|NODE_ENV|HOME|PATH|SHELL|USER|LANG|TERM|DISPLAY|XDG_)\\w*(?:KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL)\\w*[\"']"
+        files: ["*.py"]
+      - type: regex
+        value: "process\\.env\\.(?!VITE_|NODE_ENV)\\w*(?:KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL)"
+        files: ["*.ts", "*.js"]
+    why: "Huxley uses macOS Keychain via secret_provider.py/.ts for stored service credentials. Env vars are for public config and the gateway/media API keys that .env.example documents."
+    fix: "Use global/lib/secret_provider.py (Python) or global/lib/secret-provider.ts (TypeScript) for all secrets."
+    examples:
+      bad: |
+        api_key = os.environ.get("OPENAI_API_KEY")
+      good: |
+        import sys; sys.path.insert(0, "global/lib")
+        from secret_provider import get_secret
+        api_key = get_secret("openai-api")
+    tags: ["catalyst-convention", "credentials", "keychain"]
+
+  # === WARNING: Architecture ===
+
+  - id: missing_capsule_claude_md
+    severity: warning
+    category: correctness
+    pattern: "Capsule directory without CLAUDE.md"
+    detection:
+      - type: semantic
+        description: "New capsule created under capsules/ without a CLAUDE.md file"
+    why: "Every capsule needs a CLAUDE.md for agent context. Use templates/capsule-claude-md.template.md."
+    fix: "Generate with: python3 tools/generate_claude_md.py <capsule> or copy the template."
+    tags: ["catalyst-convention", "capsule"]
+
+  - id: cross_capsule_import
+    severity: warning
+    category: correctness
+    pattern: "Direct import across capsule boundaries"
+    detection:
+      - type: regex
+        value: "from\\s+capsules\\.(?!__init__)\\w+.*import|require\\(['\"].*capsules/"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Capsules are self-contained. Cross-capsule imports create hidden dependencies."
+    fix: "Use shared libraries in global/ or tools/, or extract common code to a shared module."
+    tags: ["catalyst-convention", "capsule", "coupling"]
+
+  - id: subprocess_without_timeout
+    severity: warning
+    category: reliability
+    pattern: "subprocess.run or Popen without timeout in hooks/scripts"
+    detection:
+      - type: regex
+        value: "subprocess\\.(?:run|call|check_output|check_call)\\([^)]*\\)(?!.*timeout)"
+        files: ["*.py"]
+    why: "Hooks and scripts must not hang. Always set a timeout."
+    fix: "Add timeout parameter: subprocess.run([...], timeout=30)"
+    examples:
+      bad: |
+        subprocess.run(["ruff", "check", file_path])
+      good: |
+        subprocess.run(["ruff", "check", file_path], timeout=10)
+    tags: ["reliability", "hooks"]
+
+  - id: sqlite_without_context_manager
+    severity: warning
+    category: reliability
+    pattern: "SQLite connection without context manager"
+    detection:
+      - type: regex
+        value: "sqlite3\\.connect\\([^)]+\\)(?!.*\\bwith\\b)"
+        files: ["*.py"]
+    why: "Connections not wrapped in `with` can leak on exceptions."
+    fix: "Use `with sqlite3.connect(path) as conn:` for automatic cleanup."
+    tags: ["reliability", "database"]
+
+  # === INFO: Conventions ===
+
+  - id: agent_without_model_field
+    severity: info
+    category: maintainability
+    pattern: "Agent file missing explicit model field"
+    detection:
+      - type: semantic
+        description: "Agent .md file in .claude/agents/ without model: field in frontmatter"
+    why: "All agents should have explicit model tiering (opus/sonnet/haiku) for cost control."
+    fix: "Add model: opus or model: sonnet to the agent frontmatter."
+    tags: ["catalyst-convention", "agents"]
+
+  - id: tool_without_skill
+    severity: info
+    category: maintainability
+    pattern: "Tool in tools/ directory without corresponding skill"
+    detection:
+      - type: semantic
+        description: "Python/TS tool without matching .claude/skills/<name>/SKILL.md"
+    why: "Skills make tools discoverable and provide usage instructions to agents."
+    fix: "Create a SKILL.md in .claude/skills/<tool-name>/ with trigger patterns and usage."
+    tags: ["catalyst-convention", "skills"]

@@ -1,0 +1,64 @@
+{
+  "xcode_project_policy": {
+    "version": "1.0",
+    "description": "Huxley global policy for Xcode project creation",
+    "created": "2025-08-12",
+    "policy": {
+      "always_link_files": true,
+      "never_copy_source": true,
+      "description": "All Xcode projects MUST reference actual source files, never copy them. This ensures all editors (Xcode, Cursor, terminal, Claude Code) work on the same files."
+    },
+    
+    "tools": {
+      "preferred_generator": "{{CATALYST_ROOT}}/tools/create_linked_xcode_project.py",
+      "deprecated_generators": [
+        "create_xcode_project.py",
+        "any script that copies source files"
+      ]
+    },
+    
+    "validation": {
+      "required_behavior": [
+        "Must use PBXFileReference with relative paths",
+        "Must set sourceTree to '<group>'",
+        "Must NOT copy files to project directory",
+        "Must preserve original directory structure"
+      ],
+      "forbidden_behavior": [
+        "Copying Swift source files",
+        "Moving files into .xcodeproj directory",
+        "Creating duplicate source files",
+        "Using absolute file paths in project references"
+      ]
+    },
+    
+    "enforcement": {
+      "agents": [
+        "iOS Dev",
+        "macos-specialist", 
+        "System Architect",
+        "Code Reviewer"
+      ],
+      "auto_correction": true,
+      "warning_level": "error"
+    },
+    
+    "templates": {
+      "apple-app-starter": {
+        "use_linked_projects": true,
+        "script": "tools/create_linked_xcode_project.py"
+      }
+    },
+    
+    "documentation": {
+      "rationale": "Linking files instead of copying ensures that all development tools work on the same source files, preventing sync issues and maintaining a single source of truth.",
+      "benefits": [
+        "No file duplication",
+        "Changes sync across all editors",
+        "Simpler project structure",
+        "Reduced storage usage",
+        "Consistent codebase"
+      ]
+    }
+  }
+}

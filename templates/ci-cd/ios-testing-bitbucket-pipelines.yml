@@ -1,0 +1,140 @@
+# Bitbucket Pipelines - iOS Testing Pipeline
+# Place this file at: bitbucket-pipelines.yml
+
+image: macos-12-xcode-14
+
+definitions:
+  caches:
+    pip: ~/.cache/pip
+    gems: ~/.gem
+
+pipelines:
+  default:
+    - step:
+        name: Build & Test (Minimal)
+        caches:
+          - pip
+          - gems
+        script:
+          # Setup
+          - pip3 install Pillow numpy
+          - gem install json
+
+          # Boot simulator
+          - xcrun simctl boot "iPhone 16" || true
+          - sleep 10
+
+          # Build
+          - xcodebuild build
+              -scheme MyApp
+              -destination 'platform=iOS Simulator,name=iPhone 16'
+              -configuration Debug
+
+          # Run minimal tests
+          - cd testing
+          - ./scripts/run-matrix-tests.sh minimal
+
+          # Visual regression
+          - |
+            if [ -d baseline-screenshots ] && [ -n "$(ls -A baseline-screenshots)" ]; then
+              ./scripts/run-visual-diff.sh
+            fi
+
+          # Network analysis
+          - ./scripts/analyze-network.sh || true
+        artifacts:
+          - testing/test-results/**
+
+  branches:
+    main:
+      - step:
+          name: Comprehensive Testing
+          caches:
+            - pip
+            - gems
+          script:
+            # Setup
+            - pip3 install Pillow numpy
+            - gem install json
+
+            # Boot simulator
+            - xcrun simctl boot "iPhone 16" || true
+            - sleep 10
+
+            # Build
+            - xcodebuild build
+                -scheme MyApp
+                -destination 'platform=iOS Simulator,name=iPhone 16'
+
+            # Run comprehensive tests
+            - cd testing
+            - ./scripts/run-comprehensive-pipeline.sh
+
+            # Check for regressions
+            - |
+              if [ -f test-results/pipeline-*/visual-diff/diff-results.json ]; then
+                DIFF_COUNT=$(cat test-results/pipeline-*/visual-diff/diff-results.json | jq '.different')
+                if [ "$DIFF_COUNT" -gt 0 ]; then
+                  echo "❌ $DIFF_COUNT visual regressions detected"
+                  exit 1
+                fi
+              fi
+          artifacts:
+            - testing/test-results/**
+
+  pull-requests:
+    '**':
+      - step:
+          name: PR Validation
+          caches:
+            - pip
+            - gems
+          script:
+            # Setup
+            - pip3 install Pillow numpy
+            - gem install json
+
+            # Boot simulator
+            - xcrun simctl boot "iPhone 16" || true
+            - sleep 10
+
+            # Quick validation
+            - cd testing
+            - ./scripts/run-matrix-tests.sh minimal
+            - ./scripts/run-visual-diff.sh || true
+          artifacts:
+            - testing/test-results/**
+
+  custom:
+    accessibility-test:
+      - step:
+          name: Accessibility Compliance
+          caches:
+            - pip
+            - gems
+          script:
+            - pip3 install Pillow numpy
+            - gem install json
+            - xcrun simctl boot "iPhone 16" || true
+            - sleep 10
+            - cd testing
+            - ./scripts/run-matrix-tests.sh accessibility
+          artifacts:
+            - testing/test-results/**
+
+    network-test:
+      - step:
+          name: Network Resilience
+          caches:
+            - pip
+            - gems
+          script:
+            - pip3 install Pillow numpy
+            - gem install json
+            - xcrun simctl boot "iPhone 16" || true
+            - sleep 10
+            - cd testing
+            - ./scripts/run-matrix-tests.sh network
+            - ./scripts/analyze-network.sh
+          artifacts:
+            - testing/test-results/**

@@ -1,0 +1,88 @@
+{
+  "name": "useSpringRef",
+  "signature": "useSpringRef(): SpringRef",
+  "description": "Create a ref for imperative animation control. Enables triggering animations without React re-renders - critical for performance in high-frequency updates like mouse tracking or gestures.",
+  "parameters": [],
+  "returns": {
+    "type": "SpringRef",
+    "description": "Reference object with .start(), .set(), .stop(), .pause(), .resume() methods for controlling animations imperatively"
+  },
+  "examples": [
+    {
+      "title": "Basic imperative control",
+      "code": "import { useSpring, useSpringRef } from '@react-spring/web'\n\nfunction Component() {\n  const api = useSpringRef()\n  const springs = useSpring({\n    ref: api,\n    from: { x: 0 },\n  })\n\n  const handleClick = () => {\n    api.start({\n      to: { x: springs.x.get() === 100 ? 0 : 100 },\n    })\n  }\n\n  return (\n    <animated.div onClick={handleClick} style={springs}>\n      Click me\n    </animated.div>\n  )\n}"
+    },
+    {
+      "title": "Mouse tracking (no re-renders)",
+      "code": "import { useSpring, useSpringRef, animated } from '@react-spring/web'\n\nfunction MouseTracker() {\n  const api = useSpringRef()\n  const [springs] = useSpring(() => ({\n    ref: api,\n    x: 0,\n    y: 0,\n    config: { tension: 300, friction: 30 }\n  }))\n\n  const handleMouseMove = (e) => {\n    // No React re-render! Direct spring update\n    api.start({\n      x: e.clientX,\n      y: e.clientY,\n    })\n  }\n\n  return (\n    <div onMouseMove={handleMouseMove}>\n      <animated.div\n        style={{\n          transform: springs.x.to((x, y) => `translate(${x}px, ${y}px)`)\n        }}\n      />\n    </div>\n  )\n}"
+    },
+    {
+      "title": "Conditional animations",
+      "code": "const api = useSpringRef()\nconst springs = useSpring({\n  ref: api,\n  from: { opacity: 0, scale: 0.8 },\n})\n\n// Later, trigger based on condition\nif (isVisible) {\n  api.start({ opacity: 1, scale: 1 })\n} else {\n  api.start({ opacity: 0, scale: 0.8 })\n}"
+    },
+    {
+      "title": "Sequencing multiple springs",
+      "code": "const api1 = useSpringRef()\nconst api2 = useSpringRef()\n\nconst spring1 = useSpring({ ref: api1, from: { x: 0 } })\nconst spring2 = useSpring({ ref: api2, from: { y: 0 } })\n\nconst handleAnimate = async () => {\n  // Animate sequentially\n  await api1.start({ x: 100 })\n  await api2.start({ y: 100 })\n  console.log('Both animations complete')\n}"
+    },
+    {
+      "title": "Gesture with velocity",
+      "code": "import { useDrag } from '@use-gesture/react'\n\nconst api = useSpringRef()\nconst [springs] = useSpring(() => ({\n  ref: api,\n  x: 0,\n  config: { decay: true }\n}))\n\nconst bind = useDrag(({ down, velocity: [vx], offset: [ox] }) => {\n  if (down) {\n    api.start({ x: ox, config: { tension: 300, friction: 30 } })\n  } else {\n    // Fling with decay based on release velocity\n    api.start({\n      x: ox + vx * 200,\n      config: { decay: true, velocity: vx }\n    })\n  }\n})\n\nreturn <animated.div {...bind()} style={springs} />"
+    },
+    {
+      "title": "Controlling multiple values independently",
+      "code": "const api = useSpringRef()\nconst springs = useSpring({\n  ref: api,\n  from: { x: 0, opacity: 0, scale: 1 },\n})\n\n// Update only specific values\napi.start({ x: 100 })                    // Only move\napi.start({ opacity: 1 })                // Only fade\napi.start({ x: 200, scale: 1.5 })       // Move and scale\n\n// Update all at once\napi.start({ x: 0, opacity: 0, scale: 1 })"
+    }
+  ],
+  "methods": [
+    {
+      "name": "api.start(config)",
+      "description": "Start or update animation. Returns a Promise that resolves when animation completes.",
+      "signature": "start(config: SpringUpdate): Promise<AnimationResult>"
+    },
+    {
+      "name": "api.set(values)",
+      "description": "Immediately set spring values without animating. Useful for resetting state.",
+      "signature": "set(values: SpringValues): void"
+    },
+    {
+      "name": "api.stop()",
+      "description": "Stop all ongoing animations. Values remain at current position.",
+      "signature": "stop(): void"
+    },
+    {
+      "name": "api.pause()",
+      "description": "Pause animations. Can be resumed later with .resume() or .start().",
+      "signature": "pause(): void"
+    },
+    {
+      "name": "api.resume()",
+      "description": "Resume paused animations from current position.",
+      "signature": "resume(): void"
+    }
+  ],
+  "keyDifferences": {
+    "declarative": "useSpring({ from: { x: 0 }, to: { x: 100 } }) - Animates on every React render when 'to' changes",
+    "imperative": "api.start({ x: 100 }) - Only animates when you explicitly call start(), no re-renders"
+  },
+  "performanceBenefits": [
+    "No React re-renders - Direct spring updates bypass React reconciliation",
+    "High-frequency updates - Mouse, scroll, gesture tracking without performance penalty",
+    "Conditional control - Trigger animations based on complex logic without state changes",
+    "Sequential animations - Await animation completion before next step",
+    "Manual optimization - Full control over when and how animations trigger"
+  ],
+  "commonPatterns": [
+    "Mouse/touch tracking - Update springs in event handlers",
+    "Gesture animations - useDrag/useScroll with velocity and decay",
+    "Conditional animations - Trigger based on external events (WebSocket, timers)",
+    "Animation sequences - Await multiple animations in order",
+    "Performance-critical UIs - Avoid re-render overhead for smooth 60fps"
+  ],
+  "importantNotes": [
+    "IMPORTANT: When using ref or api, config changes in the hook definition won't auto-trigger animations. You must call api.start() explicitly.",
+    "The spring still re-renders the component when animated values change, but the trigger (api.start call) doesn't require a component re-render.",
+    "Combine with animated.to() for derived values: springs.x.to(x => `translateX(${x}px)`)",
+    "Use springs.x.get() to read current spring value synchronously"
+  ],
+  "relatedHooks": ["useSpring", "useSpringValue", "useChain", "useTrail"]
+}

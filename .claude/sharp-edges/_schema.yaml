@@ -1,0 +1,118 @@
+# Sharp Edges Schema Definition
+# This file documents the structure for all sharp-edge YAML files
+
+version: "1.0"
+description: "Huxley Sharp Edges Schema"
+
+schema:
+  sharp_edge:
+    required:
+      - id          # Unique identifier (snake_case)
+      - severity    # critical | warning | info
+      - category    # security | performance | correctness | maintainability | reliability
+      - pattern     # Human-readable description
+      - why         # Why this is a problem
+      - fix         # How to fix/avoid
+
+    optional:
+      - detection   # List of detection rules
+      - examples    # Bad/good code examples
+      - references  # External documentation links
+      - tags        # Additional categorization tags
+      - languages   # Specific languages this applies to
+
+  detection_rule:
+    required:
+      - type        # regex | ast | semantic
+    optional:
+      - value       # The pattern/rule
+      - files       # File glob patterns
+      - description # For semantic rules
+
+  severity_levels:
+    critical:
+      description: "Production failures, security vulnerabilities, data loss"
+      review_action: "Block commit, require immediate fix"
+      priority: 1
+
+    warning:
+      description: "Likely bugs, performance issues, maintenance problems"
+      review_action: "Flag for review, strong recommendation to fix"
+      priority: 2
+
+    info:
+      description: "Best practice violations, could lead to issues"
+      review_action: "Note in review, optional fix"
+      priority: 3
+
+  categories:
+    security:
+      description: "Authentication, authorization, injection, secrets exposure"
+      examples:
+        - "SQL injection"
+        - "XSS"
+        - "hardcoded credentials"
+        - "insecure deserialization"
+
+    performance:
+      description: "Inefficient code, resource waste, scalability issues"
+      examples:
+        - "N+1 queries"
+        - "memory leaks"
+        - "blocking I/O"
+        - "missing indexes"
+
+    correctness:
+      description: "Logic errors, race conditions, data integrity issues"
+      examples:
+        - "null safety"
+        - "off-by-one"
+        - "race conditions"
+        - "type coercion bugs"
+
+    maintainability:
+      description: "Code quality, readability, technical debt"
+      examples:
+        - "code smells"
+        - "high complexity"
+        - "poor naming"
+        - "missing docs"
+
+    reliability:
+      description: "Error handling, fault tolerance, resilience"
+      examples:
+        - "missing error handling"
+        - "no timeouts"
+        - "no retry logic"
+        - "silent failures"
+
+    catalyst:
+      description: "Huxley system-specific conventions and invariants"
+      examples:
+        - "hardcoded ports (use port-registry)"
+        - "secrets in env vars (use Keychain)"
+        - "files in root directory"
+        - "cross-capsule imports"
+        - "template remote added"
+
+# Example entry structure
+example_entry:
+  - id: sql_injection_raw_query
+    severity: critical
+    category: security
+    pattern: "Raw SQL query with string interpolation"
+    detection:
+      - type: regex
+        value: "execute\\s*\\(\\s*f[\"']"
+        files: ["*.py"]
+    why: "String interpolation in SQL queries allows attackers to inject malicious SQL"
+    fix: "Use parameterized queries or ORM methods instead of string interpolation"
+    examples:
+      bad: |
+        cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")
+      good: |
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    references:
+      - "https://owasp.org/www-community/attacks/SQL_Injection"
+    tags: ["owasp-top-10", "injection"]
+    languages: ["python", "typescript", "javascript"]

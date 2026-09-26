@@ -1,0 +1,50 @@
+# Huxley — gitleaks config for this repo.
+#
+# Run before pushing anything public:
+#   gitleaks detect --no-git --redact
+#   gitleaks git --redact          # scan commit history too
+#
+# Extends the default ruleset. Each [[allowlists]] entry below is an
+# AND-condition allowlist: BOTH the path AND the specific, hand-confirmed
+# placeholder value must match, so every file stays scanned for every other
+# secret shape. A real secret in any file — including these — is still
+# reported.
+#
+# NOTE: gitleaks >= 8.25 required ([[allowlists]] + condition = "AND").
+
+[extend]
+useDefault = true
+
+# Global, value-anchored placeholders (matched against the SECRET itself,
+# never a whole file): documented local-dev defaults and obvious dummies.
+[[allowlists]]
+description = "Huxley: literal placeholder values"
+regexes = [
+    '''(?i)your[-_](api|secret)[-_]?key([-_]here)?''',
+    '''dev-router-key''',
+    '''(?i)(sk|key)-?x{3,}''',
+]
+
+[[allowlists]]
+description = "sharp-edges lessons: canonical fake key in negative examples"
+condition = "AND"
+paths = ['''\.claude/sharp-edges/[^/]+\.ya?ml$''']
+regexes = ['''sk-1234567890abcdef''']
+
+[[allowlists]]
+description = "MCP path doc: synthetic Airtable PAT in the security-violation example"
+condition = "AND"
+paths = ['''global/docs/MCP_Path_Resolution_Strategy\.md$''']
+regexes = ['''pat(?:123456789|EXAMPLE0{2,})[A-Za-z0-9.]*''']
+
+[[allowlists]]
+description = "cartpanda pytest fixture value"
+condition = "AND"
+paths = ['''tools/cartpanda/tests/conftest\.py$''']
+regexes = ['''(?i)test[-_]?key[-_]?abc123''']
+
+[[allowlists]]
+description = "SDK webhook docs/server: curl placeholder keys"
+condition = "AND"
+paths = ['''tools/sdk/(?:WEBHOOK_SERVER\.md|webhook_server\.py)$''']
+regexes = ['''(?i)your[-_](api|secret)[-_]?key([-_]here)?''']

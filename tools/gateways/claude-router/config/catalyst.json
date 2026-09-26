@@ -1,0 +1,108 @@
+{
+  "HuxleyManaged": true,
+  "LOG": true,
+  "LOG_LEVEL": "debug",
+  "API_TIMEOUT_MS": 600000,
+  "transformers": [
+    {
+      "path": "{{HOME_DIR}}/.claude-code-router/plugins/openai-responses-fixed.js"
+    },
+    {
+      "path": "{{HOME_DIR}}/.claude-code-router/plugins/bifrost-chat-endpoint.js"
+    },
+    {
+      "path": "{{HOME_DIR}}/.claude-code-router/plugins/noop-transformer.js"
+    },
+    {
+      "path": "{{HOME_DIR}}/.claude-code-router/plugins/minimax-reasoning-exclude.js"
+    }
+  ],
+  "Providers": [
+    {
+      "name": "bifrost-chat",
+      "api_base_url": "http://127.0.0.1:8083/v1/chat/completions",
+      "api_key": "dummy",
+      "models": [
+        "openai/gpt-4o-mini",
+        "openai/gpt-4o",
+        "openai/o1-mini",
+        "together/black-forest-labs/FLUX.1-schnell-Free",
+        "together/black-forest-labs/FLUX.1-dev",
+        "replicate/black-forest-labs/flux-dev",
+        "replicate/black-forest-labs/flux-1.1-pro",
+        "fal/fal-ai/flux-pro",
+        "fal/fal-ai/flux/schnell"
+      ],
+      "transformer": {
+        "use": [
+          "agent-name-resolver",
+          "agent-model-router",
+          "bifrost-chat-endpoint"
+        ]
+      }
+    },
+    {
+      "name": "bifrost-minimax",
+      "api_base_url": "http://127.0.0.1:8083/v1/chat/completions",
+      "api_key": "dummy",
+      "models": [
+        "openrouter/minimax/minimax-m2"
+      ],
+      "transformer": {
+        "use": ["bifrost-chat-endpoint", "minimax-reasoning-exclude"]
+      }
+    },
+    {
+      "name": "bifrost-kimi",
+      "api_base_url": "http://127.0.0.1:8083/v1/chat/completions",
+      "api_key": "dummy",
+      "models": [
+        "openrouter/moonshotai/kimi-k2-thinking"
+      ],
+      "transformer": {
+        "use": [
+          "agent-name-resolver",
+          "agent-model-router",
+          "bifrost-chat-endpoint"
+        ]
+      }
+    },
+    {
+      "name": "bifrost-responses",
+      "api_base_url": "http://127.0.0.1:8083/v1/responses",
+      "api_key": "$OPENAI_API_KEY",
+      "models": [
+        "openai/gpt-5.1-codex",
+        "openai/gpt-5-codex"
+      ],
+      "transformer": {
+        "use": [
+          "agent-name-resolver",
+          "agent-model-router",
+          "openai-responses-fixed"
+        ]
+      }
+    },
+    {
+      "name": "openai-direct",
+      "api_base_url": "https://api.openai.com/v1/responses",
+      "api_key": "$OPENAI_API_KEY",
+      "models": [
+        "gpt-5.1-codex",
+        "gpt-5-codex"
+      ],
+      "transformer": {
+        "use": ["noop-transformer"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "bifrost-responses,openai/gpt-5.1-codex",
+    "think": "bifrost-responses,openai/gpt-5.1-codex",
+    "longContext": "bifrost-kimi,openrouter/moonshotai/kimi-k2-thinking",
+    "longContextThreshold": 160000,
+    "background": "bifrost-chat,openai/gpt-4o",
+    "webSearch": "bifrost-chat,openai/gpt-4o-mini",
+    "media": "bifrost-chat,openai/gpt-4o"
+  }
+}

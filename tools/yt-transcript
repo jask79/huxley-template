@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+# yt-transcript — Extract YouTube video metadata + transcript for LLM consumption
+# Strategy: yt-dlp (primary, solves JS challenges) → youtube_transcript_api (fallback)
+# Usage: yt-transcript <URL|VIDEO_ID> [--json] [--timestamps] [--metadata-only] [--transcript-only]
+set -euo pipefail
+
+show_help() {
+    cat <<'EOF'
+Usage: yt-transcript <URL|VIDEO_ID> [OPTIONS]
+
+Extract YouTube video metadata and transcript as clean text for LLM consumption.
+
+Options:
+  --json              Output as structured JSON
+  --timestamps        Include timestamps in transcript
+  --metadata-only     Only fetch metadata (title, description, etc.)
+  --transcript-only   Only fetch transcript text
+  --lang LANG         Transcript language (default: en)
+  -h, --help          Show this help
+
+Examples:
+  yt-transcript "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  yt-transcript dQw4w9WgXcQ --json
+  yt-transcript dQw4w9WgXcQ --transcript-only
+  yt-transcript dQw4w9WgXcQ --timestamps --lang es
+EOF
+    exit 0
+}
+
+# Defaults
+FORMAT="text"
+TIMESTAMPS=""
+MODE="full"
+LANG="en"
+
+# Parse args
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --json) FORMAT="json"; shift ;;
+        --timestamps) TIMESTAMPS="yes"; shift ;;
+        --metadata-only) MODE="metadata"; shift ;;
+        --transcript-only) MODE="transcript"; shift ;;
+        --lang) LANG="$2"; shift 2 ;;
+        -h|--help) show_help ;;
+        *) POSITIONAL+=("$1"); shift ;;
+    esac
+done
+set -- "${POSITIONAL[@]}"
+
+if [[ $# -lt 1 ]]; then
+    echo "Error: URL or video ID required" >&2
+    echo "Usage: yt-transcript <URL|VIDEO_ID> [--json] [--timestamps]" >&2
+    exit 1
+fi
+
+INPUT="$1"
+
+# Extract video ID from various URL formats
+extract_video_id() {
+    local input="$1"
+    if [[ "$input" =~ ^[a-zA-Z0-9_-]{11}$ ]]; then
+        echo "$input"
+    elif [[ "$input" =~ v=([a-zA-Z0-9_-]{11}) ]]; then
+        echo "${BASH_REMATCH[1]}"
+    elif [[ "$input" =~ youtu\.be/([a-zA-Z0-9_-]{11}) ]]; then
+        echo "${BASH_REMATCH[1]}"
+    elif [[ "$input" =~ shorts/([a-zA-Z0-9_-]{11}) ]]; then
+        echo "${BASH_REMATCH[1]}"
+    else
+        echo "$input"
+    fi
+}
+
+VIDEO_ID=$(extract_video_id "$INPUT")
+# Normalize URL for yt-dlp
+YT_URL="https://www.youtube.com/watch?v=${VIDEO_ID}"
+
+# Fetch metadata via yt-dlp
+fetch_metadata() {
+    local tmpfile
+    tmpfile=$(mktemp)
+    if yt-dlp --dump-json --skip-download --no-warnings --quiet "$YT_URL" > "$tmpfile" 2>/dev/null; then
+        python3 -c "
+import json, sys
+with open('$tmpfile') as f:
+    d = json.load(f)
+fields = ['title','uploader','channel','duration_string','description','view_count','like_count','upload_date','chapters','tags','categories']
+result = {k: d.get(k) for k in fields if d.get(k) is not None}
+if '$FORMAT' == 'json':
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+else:
+    print(f\"TITLE: {result.get('title', 'Unknown')}\")
+    print(f\"CHANNEL: {result.get('uploader', result.get('channel', 'Unknown'))}\")
+    print(f\"DURATION: {result.get('duration_string', 'Unknown')}\")
+    print(f\"VIEWS: {result.get('view_count', 'Unknown'):,}\" if isinstance(result.get('view_count'), int) else f\"VIEWS: {result.get('view_count', 'Unknown')}\")
+    upload = result.get('upload_date', '')
+    if upload:
+        print(f\"UPLOADED: {upload[:4]}-{upload[4:6]}-{upload[6:]}\")
+    tags = result.get('tags', [])
+    if tags:
+        print(f\"TAGS: {', '.join(tags[:10])}\")
+    chapters = result.get('chapters')
+    if chapters:
+        print(f\"CHAPTERS:\")
+        for ch in chapters:
+            mins = int(ch['start_time'] // 60)
+            secs = int(ch['start_time'] % 60)
+            print(f\"  [{mins:02d}:{secs:02d}] {ch['title']}\")
+    desc = result.get('description', '')
+    if desc:
+        lines = desc.split('\n')
+        trimmed = []
+        link_streak = 0
+        for line in lines:
+            if line.strip().startswith('http') or line.strip().startswith('https'):
+                link_streak += 1
+                if link_streak > 2:
+                    continue
+            else:
+                link_streak = 0
+            trimmed.append(line)
+        print(f\"DESCRIPTION: {chr(10).join(trimmed[:20])}\")
+"
+        rm -f "$tmpfile"
+    else
+        rm -f "$tmpfile"
+        echo "Warning: Could not fetch metadata" >&2
+    fi
+}
+
+# Fetch transcript — yt-dlp primary (solves JS challenges), youtube_transcript_api fallback
+fetch_transcript() {
+    local vtt_tmp transcript_text
+
+    # Strategy 1: yt-dlp subtitle download (handles bot detection via JS solver)
+    vtt_tmp=$(mktemp -d)
+    local sub_lang="en-orig,en"
+    [[ "$LANG" != "en" ]] && sub_lang="${LANG}"
+
+    if yt-dlp --write-auto-subs --write-subs --skip-download --sub-format vtt \
+              --sub-langs "$sub_lang" --no-warnings --quiet \
+              -o "${vtt_tmp}/sub" "$YT_URL" 2>/dev/null; then
+        # Find the downloaded VTT file
+        local vtt_file
+        vtt_file=$(find "$vtt_tmp" -name "*.vtt" -type f | head -1)
+        if [[ -n "$vtt_file" && -s "$vtt_file" ]]; then
+            if [[ -n "$TIMESTAMPS" ]]; then
+                # Return with timestamps
+                python3 -c "
+import re, json
+with open('$vtt_file') as f:
+    content = f.read()
+content = re.sub(r'^WEBVTT\n.*?\n\n', '', content, flags=re.DOTALL)
+segments = []
+current_time = None
+current_text = []
+for line in content.split('\n'):
+    line = line.strip()
+    m = re.match(r'^(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->', line)
+    if m:
+        if current_time and current_text:
+            text = ' '.join(current_text)
+            text = re.sub(r'<[^>]+>', '', text)
+            if text:
+                segments.append({'time': current_time, 'text': text})
+        current_time = m.group(1)
+        current_text = []
+    elif line and not line.startswith('align:') and not line.startswith('position:'):
+        line = re.sub(r'<[^>]+>', '', line)
+        if line:
+            current_text.append(line)
+if current_time and current_text:
+    text = ' '.join(current_text)
+    text = re.sub(r'<[^>]+>', '', text)
+    if text:
+        segments.append({'time': current_time, 'text': text})
+# Deduplicate consecutive identical text
+deduped = []
+for seg in segments:
+    if not deduped or seg['text'] != deduped[-1]['text']:
+        deduped.append(seg)
+print(json.dumps(deduped, indent=2, ensure_ascii=False))
+"
+            else
+                # Return clean text
+                python3 -c "
+import re
+with open('$vtt_file') as f:
+    content = f.read()
+content = re.sub(r'^WEBVTT\n.*?\n\n', '', content, flags=re.DOTALL)
+lines = []
+seen = set()
+for line in content.split('\n'):
+    line = line.strip()
+    if re.match(r'^\d{2}:\d{2}', line):
+        continue
+    if line.startswith('align:') or line.startswith('position:'):
+        continue
+    line = re.sub(r'<[^>]+>', '', line)
+    if not line or line in seen:
+        continue
+    seen.add(line)
+    lines.append(line)
+print('\n'.join(lines))
+"
+            fi
+            rm -rf "$vtt_tmp"
+            return 0
+        fi
+    fi
+    rm -rf "$vtt_tmp"
+
+    # Strategy 2: youtube_transcript_api fallback
+    if command -v youtube_transcript_api &>/dev/null; then
+        if [[ -n "$TIMESTAMPS" ]]; then
+            youtube_transcript_api "$VIDEO_ID" --languages "$LANG" --format json 2>/dev/null && return 0
+        else
+            youtube_transcript_api "$VIDEO_ID" --languages "$LANG" --format text 2>/dev/null && return 0
+        fi
+    fi
+
+    echo "Error: Could not retrieve transcript. Video may not have captions." >&2
+    return 1
+}
+
+# Main output
+case "$MODE" in
+    metadata)
+        fetch_metadata
+        ;;
+    transcript)
+        fetch_transcript
+        ;;
+    full)
+        if [[ "$FORMAT" == "json" ]]; then
+            # JSON mode: combine metadata + transcript
+            META_TMP=$(mktemp)
+            TRANS_TMP=$(mktemp)
+            yt-dlp --dump-json --skip-download --no-warnings --quiet "$YT_URL" > "$META_TMP" 2>/dev/null || true
+            fetch_transcript > "$TRANS_TMP" 2>/dev/null || true
+            python3 -c "
+import json
+meta = {}
+try:
+    with open('$META_TMP') as f:
+        d = json.load(f)
+    fields = ['title','uploader','channel','duration_string','description','view_count','like_count','upload_date','chapters','tags','categories']
+    meta = {k: d.get(k) for k in fields if d.get(k) is not None}
+except: pass
+transcript = ''
+try:
+    with open('$TRANS_TMP') as f:
+        transcript = f.read().strip()
+except: pass
+meta['transcript'] = transcript
+print(json.dumps(meta, indent=2, ensure_ascii=False))
+"
+            rm -f "$META_TMP" "$TRANS_TMP"
+        else
+            # Text mode: metadata header + separator + transcript
+            fetch_metadata
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "TRANSCRIPT:"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            fetch_transcript
+        fi
+        ;;
+esac

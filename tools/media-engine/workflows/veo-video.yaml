@@ -1,0 +1,44 @@
+name: Veo Video
+media_type: video
+model: veo-3.1-generate-preview
+auth: gemini_direct
+auth_provider: gemini
+profile: high-fidelity
+
+generation:
+  resolution: 1080p
+  aspect_ratios:
+    - "16:9"
+    - "9:16"
+  duration: 8s
+  fps: 24
+  camera_motion: slow_dolly
+  audio: ambient
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.80
+  evaluate_criteria:
+    - motion_consistency
+    - brand_alignment
+    - scene_coherence
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - not_corrupted
+
+consistency:
+  reference_images: 3
+  style_weight: 0.8
+
+output:
+  directory: "generated-media/{date}/video/"
+  naming: "{workflow}-{sequence}-{duration}"
+  formats:
+    - mp4
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

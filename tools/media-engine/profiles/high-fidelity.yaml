@@ -1,0 +1,27 @@
+name: High Fidelity
+description: Maximum quality output. 4K resolution, strict evaluation, full provenance tracking. Use for hero images, brand assets, and final production.
+
+generation:
+  resolution: 4K
+
+refinement:
+  max_iterations: 5
+  quality_threshold: 0.85
+  regression_cutoff: true
+
+consistency:
+  reference_images: 6
+  style_weight: 0.7
+
+variants:
+  variation_strength: 0.2
+
+output:
+  formats:
+    - png
+    - webp
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

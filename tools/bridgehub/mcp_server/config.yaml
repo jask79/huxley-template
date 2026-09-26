@@ -1,0 +1,158 @@
+# BridgeHub MCP Server Configuration
+version: "1.0.0"
+description: "MCP wrapper for LiteLLM with governance and cost tracking"
+
+# Provider Configuration (US/EU only for data privacy)
+providers:
+  claude:
+    service: anthropic
+    models:
+      - claude-sonnet-4-5-20250929
+      - claude-sonnet-3-5-20240620
+    region: us-east
+    cost_per_1k_tokens:
+      input: 0.003
+      output: 0.015
+
+  gpt4:
+    service: openai
+    models:
+      - gpt-4-turbo-preview
+      - gpt-4o
+    region: us-east
+    cost_per_1k_tokens:
+      input: 0.01
+      output: 0.03
+
+  gemini:
+    service: google
+    models:
+      - gemini-1.5-pro
+      - gemini-1.5-flash
+    region: us-central1
+    cost_per_1k_tokens:
+      input: 0.000125
+      output: 0.000375
+
+  llama-fast:
+    service: groq
+    models:
+      - llama-3.3-70b-versatile
+      - llama-3.1-8b-instant
+    region: us-west
+    cost_per_1k_tokens:
+      input: 0.00059
+      output: 0.00079
+
+  deepseek:
+    service: fireworks
+    models:
+      - accounts/fireworks/models/deepseek-v3
+    region: us-west  # Fireworks US hosting
+    cost_per_1k_tokens:
+      input: 0.00027
+      output: 0.00108
+
+# Smart Routing Rules
+routing:
+  simple_tasks:
+    max_tokens: 2000
+    providers: [llama-fast, gemini]
+    description: "Quick responses, simple queries"
+
+  standard_tasks:
+    max_tokens: 8000
+    providers: [gemini, llama-fast, deepseek]
+    description: "Most agent work, code generation"
+
+  complex_tasks:
+    max_tokens: 20000
+    providers: [claude, gpt4]
+    description: "Architecture, deep analysis, multi-step reasoning"
+
+  specialized:
+    code_review: [claude, gpt4]
+    creative: [claude, gpt4]
+    data_analysis: [claude, gpt4, deepseek]
+    rapid_iteration: [llama-fast, gemini]
+
+# Cost Limits (per hour)
+cost_limits:
+  agent:
+    warning: 0.50
+    critical: 1.00
+    block: 2.00
+
+  capsule:
+    warning: 2.00
+    critical: 5.00
+    block: 10.00
+
+  system:
+    warning: 10.00
+    critical: 25.00
+    block: 50.00
+
+# Governance Integration
+governance:
+  guardrails_path: "{{CATALYST_ROOT}}/global/governance/guardrails.yaml"
+
+  data_sensitivity:
+    public: ["llama-fast", "gemini", "deepseek"]
+    internal: ["claude", "gpt4", "gemini"]
+    sensitive: ["claude"]  # US-based Anthropic only
+
+  provider_restrictions:
+    allowed_regions: ["us-east", "us-west", "us-central1", "eu-west"]
+    blocked_providers: []  # All current providers are safe
+    require_encryption: true
+
+# Tracking Configuration
+tracking:
+  builder_memory_path: "{{CATALYST_ROOT}}/registry/builder-memory"
+  registry_path: "{{CATALYST_ROOT}}/registry"
+
+  log_format: "jsonl"
+  retention_days: 90
+
+  metrics:
+    - token_usage
+    - cost
+    - latency
+    - error_rate
+    - provider_distribution
+
+  aggregation:
+    by_agent: true
+    by_capsule: true
+    by_provider: true
+    by_hour: true
+    by_day: true
+
+# MCP Server Settings
+mcp:
+  protocol_version: "1.0"
+  max_concurrent_requests: 10
+  timeout_seconds: 600
+  retry_attempts: 3
+  retry_backoff_ms: [1000, 2000, 4000]
+
+# N8N Integration
+n8n:
+  enabled: true
+  endpoint: "http://localhost:5678/webhook/bridgehub"
+  auth_type: "none"  # N8N handles its own auth
+
+# Fallback Strategy
+fallback:
+  enabled: true
+  strategy: "cost_optimized"  # or "performance_optimized", "latency_optimized"
+
+  cost_optimized:
+    order: [llama-fast, gemini, deepseek, claude, gpt4]
+
+  performance_optimized:
+    order: [claude, gpt4, gemini, deepseek, llama-fast]
+
+  latency_optimized:
+    order: [llama-fast, groq, gemini, claude, gpt4]

@@ -1,0 +1,252 @@
+# Security Sharp Edges
+# Cross-cutting security patterns applicable to all agents
+
+edges:
+  # === CRITICAL: Authentication ===
+
+  - id: jwt_no_expiry
+    severity: critical
+    category: security
+    pattern: "JWT token without expiration"
+    detection:
+      - type: regex
+        value: 'jwt\.(?:encode|sign)\s*\([^)]*\)(?!.*exp)'
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Tokens without expiry can be used indefinitely if stolen"
+    fix: "Always include exp claim with reasonable TTL"
+    examples:
+      bad: |
+        jwt.sign({ userId: user.id }, secret)
+      good: |
+        jwt.sign({ userId: user.id, exp: Math.floor(Date.now()/1000) + 3600 }, secret)
+    tags: ["authentication", "jwt"]
+
+  - id: weak_password_hash
+    severity: critical
+    category: security
+    pattern: "Using weak or deprecated password hashing"
+    detection:
+      - type: regex
+        value: '(?:md5|sha1|sha256)\s*\(.*password|hashlib\.(?:md5|sha1|sha256)'
+        files: ["*.py", "*.ts", "*.js"]
+    why: "MD5, SHA1, SHA256 without salt are vulnerable to rainbow table attacks"
+    fix: "Use bcrypt, argon2, or scrypt for password hashing"
+    examples:
+      bad: |
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+      good: |
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    tags: ["passwords", "cryptography"]
+
+  - id: insecure_random
+    severity: critical
+    category: security
+    pattern: "Using non-cryptographic random for security purposes"
+    detection:
+      - type: regex
+        value: 'random\.(random|randint|choice)\s*\(|Math\.random\s*\('
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Math.random and random module are predictable"
+    fix: "Use secrets module (Python) or crypto.randomBytes (Node)"
+    examples:
+      bad: |
+        token = ''.join(random.choices(string.ascii_letters, k=32))
+      good: |
+        token = secrets.token_urlsafe(32)
+    tags: ["cryptography", "tokens"]
+
+  # === CRITICAL: Authorization ===
+
+  - id: missing_auth_check
+    severity: critical
+    category: security
+    pattern: "API endpoint without authentication/authorization check"
+    detection:
+      - type: semantic
+        description: "Route handler that accesses user data without verifying identity"
+    why: "Unauthenticated endpoints expose sensitive data"
+    fix: "Add authentication middleware or decorators to all protected routes"
+    tags: ["authorization", "api"]
+
+  - id: insecure_direct_object_reference
+    severity: critical
+    category: security
+    pattern: "Direct use of user-supplied ID without ownership check"
+    detection:
+      - type: regex
+        value: '(?:params|query|body)\.\w*[Ii]d[^}]*(?:findOne|findById|get|delete|update)'
+        files: ["*.ts", "*.js", "*.py"]
+    why: "Users can access other users' data by guessing IDs"
+    fix: "Always verify the authenticated user owns the requested resource"
+    examples:
+      bad: |
+        const order = await Order.findById(req.params.orderId)
+      good: |
+        const order = await Order.findOne({
+          _id: req.params.orderId,
+          userId: req.user.id
+        })
+    tags: ["authorization", "idor"]
+
+  - id: missing_rls_policy
+    severity: critical
+    category: security
+    pattern: "Supabase table without RLS policy"
+    detection:
+      - type: semantic
+        description: "Table created without corresponding RLS policy"
+    why: "Tables without RLS are accessible to anyone with anon key"
+    fix: "Enable RLS and create appropriate policies"
+    examples:
+      bad: |
+        CREATE TABLE orders (...)
+      good: |
+        CREATE TABLE orders (...)
+        ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+        CREATE POLICY "Users can view own orders" ON orders
+          FOR SELECT USING (auth.uid() = user_id);
+    tags: ["supabase", "rls", "authorization"]
+
+  # === WARNING: Data Exposure ===
+
+  - id: sensitive_data_in_logs
+    severity: warning
+    category: security
+    pattern: "Logging sensitive information"
+    detection:
+      - type: regex
+        value: '(?:log|print|console)\s*\([^)]*(?:password|token|secret|key|ssn|credit)'
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Sensitive data in logs can be accessed by unauthorized parties"
+    fix: "Redact or mask sensitive fields before logging"
+    examples:
+      bad: |
+        logger.info(f"User login: {user.email}, password: {password}")
+      good: |
+        logger.info(f"User login: {user.email}")
+    tags: ["logging", "pii"]
+
+  - id: sensitive_data_in_url
+    severity: warning
+    category: security
+    pattern: "Sensitive data in URL parameters"
+    detection:
+      - type: regex
+        value: '\?.*(?:token|password|secret|key)='
+        files: ["*.py", "*.ts", "*.js", "*.html"]
+    why: "URL parameters are logged in browser history, server logs, and referrer headers"
+    fix: "Send sensitive data in request body or headers"
+    examples:
+      bad: |
+        /reset-password?token=abc123
+      good: |
+        POST /reset-password with token in body
+    tags: ["data-exposure", "urls"]
+
+  - id: cors_allow_all
+    severity: warning
+    category: security
+    pattern: "CORS configured to allow all origins"
+    detection:
+      - type: regex
+        value: "Access-Control-Allow-Origin['\"]?:\\s*['\"]\\*|cors\\(\\{\\s*origin:\\s*(?:true|'\\*')"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Wildcard CORS allows any website to make authenticated requests"
+    fix: "Specify allowed origins explicitly"
+    examples:
+      bad: |
+        app.use(cors({ origin: '*' }))
+      good: |
+        app.use(cors({ origin: ['https://myapp.com'] }))
+    tags: ["cors", "csrf"]
+
+  # === WARNING: Input Validation ===
+
+  - id: missing_input_validation
+    severity: warning
+    category: security
+    pattern: "User input used without validation"
+    detection:
+      - type: semantic
+        description: "Request parameters used directly without schema validation"
+    why: "Unvalidated input enables injection and data corruption"
+    fix: "Use validation libraries: Zod, Joi, Pydantic"
+    tags: ["validation", "input"]
+
+  - id: path_traversal
+    severity: critical
+    category: security
+    pattern: "File path constructed from user input"
+    detection:
+      - type: regex
+        value: '(?:open|readFile|writeFile|unlink)\s*\([^)]*(?:params|query|body|req\.)'
+        files: ["*.py", "*.ts", "*.js"]
+    why: "User can access files outside intended directory with ../"
+    fix: "Validate and sanitize paths, use path.basename, check against allowlist"
+    examples:
+      bad: |
+        fs.readFile(`uploads/${req.params.filename}`)
+      good: |
+        const safeName = path.basename(req.params.filename)
+        if (!allowedFiles.includes(safeName)) throw new Error()
+        fs.readFile(path.join(uploadsDir, safeName))
+    tags: ["path-traversal", "lfi"]
+
+  - id: command_injection
+    severity: critical
+    category: security
+    pattern: "Shell command with user input"
+    detection:
+      - type: regex
+        value: "(?:exec|spawn|system|popen)\\s*\\([^)]*(?:\\+|f[\"']|\\$\\{|\\.format)"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "User can inject arbitrary shell commands"
+    fix: "Use parameterized commands, avoid shell=True, sanitize input"
+    examples:
+      bad: |
+        subprocess.run(f"convert {filename} output.png", shell=True)
+      good: |
+        subprocess.run(["convert", filename, "output.png"])
+    tags: ["injection", "rce"]
+
+  # === INFO: Defense in Depth ===
+
+  - id: missing_csrf_protection
+    severity: warning
+    category: security
+    pattern: "State-changing endpoint without CSRF protection"
+    detection:
+      - type: semantic
+        description: "POST/PUT/DELETE endpoint without CSRF token validation"
+    why: "CSRF attacks can trick users into performing unwanted actions"
+    fix: "Implement CSRF tokens or use SameSite cookies"
+    tags: ["csrf", "forms"]
+
+  - id: missing_rate_limiting
+    severity: info
+    category: security
+    pattern: "Public endpoint without rate limiting"
+    detection:
+      - type: semantic
+        description: "Endpoint accessible without authentication lacks rate limiting"
+    why: "Unprotected endpoints are vulnerable to brute force and DoS"
+    fix: "Implement rate limiting middleware"
+    tags: ["rate-limiting", "dos"]
+
+  - id: verbose_error_messages
+    severity: info
+    category: security
+    pattern: "Detailed error messages exposed to client"
+    detection:
+      - type: regex
+        value: 'res\.(?:json|send)\s*\([^)]*(?:error\.stack|error\.message|err\.)'
+        files: ["*.ts", "*.js"]
+    why: "Stack traces reveal implementation details to attackers"
+    fix: "Return generic error messages, log details server-side"
+    examples:
+      bad: |
+        res.status(500).json({ error: err.stack })
+      good: |
+        logger.error(err)
+        res.status(500).json({ error: "Internal server error" })
+    tags: ["error-handling", "information-disclosure"]

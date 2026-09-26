@@ -1,0 +1,6 @@
+{"type":"system","subtype":"bridge_status","version":"2.1.131","sessionId":"fix-002","timestamp":"2026-05-06T00:00:00.000Z"}
+{"type":"user","sessionId":"fix-002","message":{"role":"user","content":"what time is it"}}
+{"type":"assistant","sessionId":"fix-002","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"date"}}]}}
+{"type":"assistant","sessionId":"fix-002","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"date -u"}}]}}
+{"type":"assistant","sessionId":"fix-002","message":{"role":"assistant","content":[{"type":"text","text":"It's 4:30 PM."}]}}
+{"type":"user","sessionId":"fix-002","message":{"role":"user","content":"thanks"}}

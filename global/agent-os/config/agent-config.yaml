@@ -1,0 +1,29 @@
+# Agent OS Integration Configuration for Huxley
+integration:
+  mode: "hybrid"
+  builder_version: "2.0.0"
+  agent_os_version: "1.4.1"
+
+workflow_engine:
+  capsule_awareness: true
+  governance_integration: true
+
+agent_coordination:
+  orchestrator: "{{ORCHESTRATOR_NAME_LOWER}}"
+  max_concurrent_workflows: 5
+  session_timeout: 1800
+  handoff_protocol: "builder_enhanced"
+
+quality_standards:
+    validation_level: "essential"
+    documentation_depth: "minimal"
+    testing_coverage: 0
+    validation_level: "comprehensive"
+    documentation_depth: "complete"
+    testing_coverage: 80
+
+governance:
+  risk_classification: true
+  dod_validation: true
+  approval_gates: true
+  audit_trails: true

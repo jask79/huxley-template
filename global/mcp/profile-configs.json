@@ -1,0 +1,157 @@
+{
+  "mcp_profiles": {
+    "default": {
+      "description": "Standard MCP profile for general development work",
+      "mcps": [
+        "filesystem",
+        "git",
+        "builder-memory",
+        "context7"
+      ],
+      "optional_mcps": [
+        "playwright",
+        "supabase"
+      ],
+      "agents": [
+        "code-reviewer",
+        "backend-architect",
+        "backend-specialist",
+        "deployment-engineer",
+        "devops-troubleshooter",
+        "security-auditor",
+        "test-automator",
+        "python-pro",
+        "data-analyst"
+      ]
+    },
+    "automation": {
+      "description": "Enhanced profile for workflow automation and process optimization",
+      "extends": "default",
+      "additional_mcps": [
+        "applescript",
+        "apple-doc",
+        "siri-shortcuts"
+      ],
+      "agents": [
+        "automation-specialist"
+      ]
+    },
+    "webdev": {
+      "description": "Web development profile with e-commerce and frontend capabilities",
+      "extends": "default",
+      "additional_mcps": [
+        "shopify"
+      ],
+      "optional_mcps": [
+        "shadcn-ui",
+        "react-spring-mcp"
+      ],
+      "agents": [
+        "shopify-specialist",
+        "frontend-specialist.web",
+        "javascript-pro"
+      ]
+    },
+    "apple": {
+      "description": "Apple platform development with iOS/macOS tools",
+      "extends": "default",
+      "additional_mcps": [
+        "applescript",
+        "siri-shortcuts",
+        "apple-doc"
+      ],
+      "optional_mcps": [
+        "xcodebuild",
+        "ios-sim"
+      ],
+      "agents": [
+        "ios-specialist",
+        "macos-specialist"
+      ]
+    },
+    "security": {
+      "description": "Enhanced security analysis with comprehensive audit capabilities",
+      "extends": "default",
+      "additional_mcps": [
+        "playwright"
+      ],
+      "agents": [
+        "security-analyst",
+        "security-auditor"
+      ]
+    },
+    "design": {
+      "description": "Design-focused profile for UI/UX work with research and component library access",
+      "extends": "default",
+      "additional_mcps": [
+        "context7"
+      ],
+      "optional_mcps": [
+        "shadcn-ui"
+      ],
+      "agents": [
+        "ui-ux-designer"
+      ]
+    }
+  },
+  "agent_mcp_matrix": {
+    "automation-specialist": {
+      "profile": "automation",
+      "core_mcps": ["filesystem", "git", "applescript", "apple-doc", "siri-shortcuts"],
+      "integration_mcps": ["builder-memory"]
+    },
+    "shopify-specialist": {
+      "profile": "webdev",
+      "core_mcps": ["filesystem", "git", "shopify"],
+      "integration_mcps": ["builder-memory"]
+    },
+    "frontend-specialist": {
+      "profile": "webdev",
+      "core_mcps": ["filesystem", "git", "shadcn-ui", "react-spring-mcp"],
+      "integration_mcps": ["builder-memory"]
+    },
+    "ios-specialist": {
+      "profile": "apple",
+      "core_mcps": ["filesystem", "git", "apple-doc"],
+      "integration_mcps": ["applescript", "siri-shortcuts", "builder-memory"],
+      "optional_mcps": ["xcodebuild", "ios-sim"]
+    },
+    "macos-specialist": {
+      "profile": "apple",
+      "core_mcps": ["filesystem", "git", "apple-doc", "applescript"],
+      "integration_mcps": ["siri-shortcuts", "builder-memory"],
+      "optional_mcps": ["xcodebuild"]
+    },
+    "security-analyst": {
+      "profile": "security",
+      "core_mcps": ["filesystem", "git", "builder-memory"],
+      "integration_mcps": ["playwright"]
+    },
+    "backend-specialist": {
+      "profile": "default",
+      "core_mcps": ["filesystem", "git", "context7"],
+      "integration_mcps": ["builder-memory"],
+      "optional_mcps": ["supabase"]
+    },
+    "ui-ux-designer": {
+      "profile": "design",
+      "core_mcps": ["filesystem", "builder-memory", "context7"],
+      "integration_mcps": [],
+      "optional_mcps": ["shadcn-ui"]
+    }
+  },
+  "profile_validation": {
+    "rules": [
+      {
+        "type": "least_privilege",
+        "description": "Agents should only have access to MCPs they need",
+        "validation": "warn_if_unused_mcps"
+      },
+      {
+        "type": "profile_alignment",
+        "description": "Agent MCP access should align with suggested profile",
+        "validation": "suggest_profile_optimization"
+      }
+    ]
+  }
+}

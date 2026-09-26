@@ -1,0 +1,205 @@
+{
+  "id": "",
+  "display_name": "",
+  "type": "ecommerce-operations",
+  "area": "ecommerce",
+  "description": "Recurring operational capsule for e-commerce automation",
+  "owners": ["{{USER_LOGIN}}"],
+  "created_at": "",
+  "version": "1.0.0",
+  
+  "operation_config": {
+    "operation_type": "daily_sync",
+    "frequency": "daily",
+    "execution_time": "09:00",
+    "timezone": "America/New_York",
+    "enabled": true,
+    "retry_policy": {
+      "max_retries": 3,
+      "retry_delay_minutes": 15,
+      "exponential_backoff": true
+    }
+  },
+  
+  "scope": {
+    "brands": [],
+    "platforms": [],
+    "data_types": ["inventory", "pricing", "reviews", "orders"],
+    "regions": ["US"]
+  },
+  
+  "data_sources": {
+    "amazon": {
+      "apis": ["sp_api", "advertising_api", "vendor_central"],
+      "data_types": ["inventory", "orders", "advertising", "reviews"],
+      "sync_frequency": "hourly"
+    },
+    "shopify": {
+      "apis": ["admin_api", "storefront_api"],
+      "data_types": ["products", "orders", "customers", "inventory"],
+      "sync_frequency": "real_time"
+    },
+    "google_ads": {
+      "apis": ["google_ads_api"],
+      "data_types": ["campaigns", "performance", "keywords"],
+      "sync_frequency": "daily"
+    }
+  },
+  
+  "data_destinations": {
+    "brand_capsules": {
+      "path": "capsules/ecommerce/brands/{brand_id}/data/",
+      "format": "jsonl",
+      "retention_days": 90
+    },
+    "analytics_warehouse": {
+      "enabled": false,
+      "connection": "",
+      "schema": "ecommerce"
+    },
+    "backup_storage": {
+      "enabled": true,
+      "location": "shared/backups/operations/",
+      "compression": true
+    }
+  },
+  
+  "processing_rules": {
+    "data_validation": {
+      "required_fields": true,
+      "data_types": true,
+      "business_rules": true
+    },
+    "data_transformation": {
+      "normalization": true,
+      "currency_conversion": false,
+      "timezone_conversion": true
+    },
+    "deduplication": {
+      "enabled": true,
+      "key_fields": ["id", "timestamp"],
+      "conflict_resolution": "latest_wins"
+    }
+  },
+  
+  "monitoring": {
+    "health_checks": {
+      "api_connectivity": true,
+      "data_freshness": true,
+      "data_quality": true,
+      "error_rates": true
+    },
+    "alerts": {
+      "sync_failures": {
+        "threshold": 2,
+        "notification": "immediate"
+      },
+      "data_quality_issues": {
+        "threshold": 5,
+        "notification": "daily_digest"
+      },
+      "api_rate_limits": {
+        "threshold": 80,
+        "notification": "immediate"
+      }
+    }
+  },
+  
+  "automation": {
+    "error_handling": {
+      "auto_retry": true,
+      "fallback_procedures": true,
+      "manual_intervention_triggers": ["auth_failure", "data_corruption"]
+    },
+    "optimization": {
+      "query_optimization": true,
+      "batch_processing": true,
+      "parallel_execution": true
+    },
+    "scaling": {
+      "auto_scaling": false,
+      "resource_monitoring": true,
+      "performance_tuning": true
+    }
+  },
+  
+  "compliance": {
+    "data_privacy": {
+      "pii_handling": "anonymize",
+      "gdpr_compliance": false,
+      "ccpa_compliance": true
+    },
+    "api_compliance": {
+      "rate_limit_respect": true,
+      "terms_of_service": true,
+      "data_usage_policy": true
+    },
+    "audit_trail": {
+      "operation_logs": true,
+      "data_lineage": true,
+      "access_logs": true
+    }
+  },
+  
+  "performance": {
+    "sla_targets": {
+      "sync_completion_time": "30_minutes",
+      "data_availability_delay": "15_minutes",
+      "uptime": 99.5
+    },
+    "resource_limits": {
+      "memory_mb": 2048,
+      "cpu_cores": 2,
+      "network_bandwidth": "100mbps"
+    },
+    "optimization_metrics": {
+      "throughput": "records_per_minute",
+      "latency": "end_to_end_delay",
+      "error_rate": "percentage"
+    }
+  },
+  
+  "dependencies": {
+    "external_services": ["amazon_sp_api", "shopify_admin", "google_ads"],
+    "internal_services": ["brand_data_service", "automation_orchestrator"],
+    "data_sources": ["brand_capsules"],
+    "infrastructure": ["redis", "postgres"]
+  },
+  
+  "outputs": {
+    "data_files": {
+      "location": "data/",
+      "formats": ["jsonl", "csv"],
+      "compression": "gzip"
+    },
+    "reports": {
+      "location": "reports/",
+      "formats": ["html", "pdf", "json"]
+    },
+    "alerts": {
+      "channels": ["email", "slack"],
+      "escalation": true
+    }
+  },
+  
+  "maintenance": {
+    "cleanup": {
+      "old_logs": "30_days",
+      "temp_files": "daily",
+      "cache_data": "weekly"
+    },
+    "updates": {
+      "dependency_check": "weekly",
+      "security_patches": "immediate",
+      "feature_updates": "monthly"
+    },
+    "backup": {
+      "configuration": "daily",
+      "critical_data": "hourly",
+      "retention": "90_days"
+    }
+  },
+  
+  "tags": ["ecommerce", "operations", "automation"],
+  "lane": "standard"
+}

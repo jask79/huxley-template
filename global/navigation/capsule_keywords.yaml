@@ -1,0 +1,7 @@
+# Capsule Keyword Mappings for Navigation Intelligence
+# Used by {{ORCHESTRATOR_NAME}} to auto-detect which capsule user wants to work on
+#
+# Format: capsule-slug: [keyword1, keyword2, ...]
+# Add entries matching your capsules in capsule-registry.yaml
+
+huxley-core: [system, "{{ORCHESTRATOR_NAME_LOWER}}", framework, core, governance, tools]

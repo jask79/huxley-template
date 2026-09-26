@@ -1,0 +1,24 @@
+{
+  "name": "ig-square",
+  "description": "Generic Instagram square 1080x1080 PNG.",
+  "canvas": {
+    "width": 1080,
+    "height": 1080,
+    "dpi": 72,
+    "colorMode": "RGB",
+    "backgroundColor": [255, 255, 255]
+  },
+  "layers": [
+    {
+      "type": "image",
+      "source": "{params.background_image}",
+      "fit": "fill"
+    }
+  ],
+  "export": [
+    {
+      "preset": "ig-square",
+      "filename": "{params.slug}"
+    }
+  ]
+}

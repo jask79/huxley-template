@@ -1,0 +1,271 @@
+# Backend Developer Sharp Edges
+# Production gotchas for API design, databases, and backend systems
+
+edges:
+  # === CRITICAL: Security ===
+
+  - id: sql_injection_raw_query
+    severity: critical
+    category: security
+    pattern: "Raw SQL query with string interpolation"
+    detection:
+      - type: regex
+        value: "execute\\s*\\(\\s*f[\"']|\\.raw\\s*\\(\\s*f[\"']|query\\s*\\(\\s*f[\"']"
+        files: ["*.py"]
+      - type: regex
+        value: "\\$\\{.*\\}.*(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)"
+        files: ["*.ts", "*.js"]
+    why: "String interpolation in SQL allows injection attacks"
+    fix: "Use parameterized queries, ORM methods, or prepared statements"
+    examples:
+      bad: |
+        cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")
+      good: |
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    tags: ["owasp-top-10", "injection"]
+
+  - id: hardcoded_secrets
+    severity: critical
+    category: security
+    pattern: "Hardcoded API keys, passwords, or secrets"
+    detection:
+      - type: regex
+        value: "(?i)(api[_-]?key|password|secret|token)\\s*[=:]\\s*[\"'][^\"']{8,}[\"']"
+        files: ["*.py", "*.ts", "*.js", "*.go", "*.yaml", "*.json"]
+      - type: regex
+        value: "sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|xoxb-[0-9]+"
+        files: ["*"]
+    why: "Secrets in code get committed to version control and exposed"
+    fix: "Use environment variables, secret managers, or .env files (gitignored)"
+    examples:
+      bad: |
+        api_key = "sk-1234567890abcdef"
+      good: |
+        api_key = os.environ.get("OPENAI_API_KEY")
+    tags: ["secrets", "credentials"]
+
+  - id: insecure_deserialization
+    severity: critical
+    category: security
+    pattern: "Unsafe deserialization of untrusted data"
+    detection:
+      - type: regex
+        value: "pickle\\.loads?\\s*\\(|yaml\\.load\\s*\\([^,]+\\)(?!\\s*,\\s*Loader)"
+        files: ["*.py"]
+      - type: regex
+        value: "eval\\s*\\(|Function\\s*\\("
+        files: ["*.ts", "*.js"]
+    why: "Deserializing untrusted data can lead to remote code execution"
+    fix: "Use safe loaders (yaml.safe_load), validate input, avoid pickle for untrusted data"
+    examples:
+      bad: |
+        data = yaml.load(user_input)
+      good: |
+        data = yaml.safe_load(user_input)
+    tags: ["owasp-top-10", "rce"]
+
+  # === CRITICAL: Data Integrity ===
+
+  - id: missing_transaction
+    severity: critical
+    category: correctness
+    pattern: "Multiple related DB operations without transaction"
+    detection:
+      - type: regex
+        value: "(?:insert|update|delete).*\\n(?:(?!commit|rollback|transaction).)*(?:insert|update|delete)"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Related operations can partially succeed, leaving data inconsistent"
+    fix: "Wrap related operations in a transaction block"
+    examples:
+      bad: |
+        db.users.update(user_id, data)
+        db.audit_log.insert(log_entry)
+      good: |
+        async with db.transaction():
+            await db.users.update(user_id, data)
+            await db.audit_log.insert(log_entry)
+    tags: ["data-integrity", "transactions"]
+
+  # === WARNING: Performance ===
+
+  - id: n_plus_one_query
+    severity: warning
+    category: performance
+    pattern: "N+1 query pattern - query inside loop"
+    detection:
+      - type: regex
+        value: "for\\s+\\w+\\s+in\\s+.*:\\s*\\n\\s+.*\\.(?:get|filter|find|query|select|fetch)"
+        files: ["*.py", "*.ts", "*.js"]
+      - type: semantic
+        description: "Database query called within iteration over collection"
+    why: "N+1 queries cause massive performance degradation at scale"
+    fix: "Use eager loading, batch queries, or join operations"
+    examples:
+      bad: |
+        for user in users:
+            orders = db.orders.filter(user_id=user.id)
+      good: |
+        users_with_orders = db.users.prefetch_related('orders').all()
+    tags: ["performance", "database"]
+
+  - id: missing_index_hint
+    severity: warning
+    category: performance
+    pattern: "Query on unindexed column pattern"
+    detection:
+      - type: regex
+        value: "WHERE\\s+(?!id\\s|.*_id\\s)(\\w+)\\s*="
+        files: ["*.sql", "*.py", "*.ts"]
+    why: "Queries on unindexed columns cause full table scans"
+    fix: "Add appropriate indexes or verify index exists"
+    tags: ["performance", "database", "index"]
+
+  - id: unbounded_query
+    severity: warning
+    category: performance
+    pattern: "Query without LIMIT that could return large result set"
+    detection:
+      - type: regex
+        value: "\\.all\\(\\)|\\.find\\(\\{\\}\\)|SELECT\\s+\\*(?!.*LIMIT)"
+        files: ["*.py", "*.ts", "*.js", "*.sql"]
+    why: "Unbounded queries can exhaust memory and crash services"
+    fix: "Add LIMIT clause, implement pagination, or use streaming"
+    examples:
+      bad: |
+        all_users = db.users.all()
+      good: |
+        users = db.users.limit(100).offset(page * 100)
+    tags: ["performance", "memory"]
+
+  - id: blocking_io_in_async
+    severity: warning
+    category: performance
+    pattern: "Blocking I/O call in async context"
+    detection:
+      - type: regex
+        value: "async\\s+def.*:\\s*(?:(?!await).)*(?:requests\\.|open\\(|time\\.sleep)"
+        files: ["*.py"]
+      - type: regex
+        value: "async\\s+.*=>\\s*\\{(?:(?!await).)*(?:fs\\.readFileSync|execSync)"
+        files: ["*.ts", "*.js"]
+    why: "Blocking calls in async code block the event loop, defeating concurrency"
+    fix: "Use async equivalents: aiohttp, aiofiles, asyncio.sleep, fs.promises"
+    examples:
+      bad: |
+        async def fetch_data():
+            response = requests.get(url)  # Blocks!
+      good: |
+        async def fetch_data():
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(url)
+    tags: ["async", "concurrency"]
+
+  # === WARNING: Reliability ===
+
+  - id: missing_error_handling
+    severity: warning
+    category: reliability
+    pattern: "External call without error handling"
+    detection:
+      - type: regex
+        value: "(?:requests\\.|fetch\\(|axios\\.|http\\.)(?:(?!try|catch|except).)*$"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Unhandled external call failures crash the application"
+    fix: "Wrap external calls in try/except with appropriate error handling"
+    examples:
+      bad: |
+        response = requests.post(api_url, data=payload)
+      good: |
+        try:
+            response = requests.post(api_url, data=payload, timeout=30)
+        except requests.RequestException as e:
+            logger.error(f"API call failed: {e}")
+            raise ServiceUnavailableError()
+    tags: ["error-handling", "resilience"]
+
+  - id: missing_timeout
+    severity: warning
+    category: reliability
+    pattern: "HTTP request without timeout"
+    detection:
+      - type: regex
+        value: "requests\\.(?:get|post|put|delete)\\([^)]*\\)(?!.*timeout)"
+        files: ["*.py"]
+      - type: regex
+        value: "fetch\\([^)]*\\)(?!.*signal|timeout)"
+        files: ["*.ts", "*.js"]
+    why: "Requests without timeouts can hang indefinitely"
+    fix: "Always specify timeout for external HTTP calls"
+    examples:
+      bad: |
+        requests.get("https://api.example.com/data")
+      good: |
+        requests.get("https://api.example.com/data", timeout=30)
+    tags: ["reliability", "timeout"]
+
+  - id: silent_exception_swallow
+    severity: warning
+    category: reliability
+    pattern: "Catching exception without logging or re-raising"
+    detection:
+      - type: regex
+        value: "except.*:\\s*\\n\\s*pass"
+        files: ["*.py"]
+      - type: regex
+        value: "catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}"
+        files: ["*.ts", "*.js"]
+    why: "Silent exception handling hides bugs and makes debugging impossible"
+    fix: "Log exceptions or re-raise with context"
+    examples:
+      bad: |
+        try:
+            process_data()
+        except Exception:
+            pass
+      good: |
+        try:
+            process_data()
+        except Exception as e:
+            logger.exception("Failed to process data")
+            raise
+    tags: ["error-handling", "observability"]
+
+  # === INFO: Best Practices ===
+
+  - id: magic_numbers
+    severity: info
+    category: maintainability
+    pattern: "Magic numbers without named constants"
+    detection:
+      - type: regex
+        value: "(?:sleep|timeout|limit|retry|delay)\\s*[=:]\\s*\\d{2,}"
+        files: ["*.py", "*.ts", "*.js"]
+    why: "Magic numbers make code hard to understand and maintain"
+    fix: "Extract to named constants with descriptive names"
+    examples:
+      bad: |
+        time.sleep(3600)
+      good: |
+        CACHE_TTL_SECONDS = 3600
+        time.sleep(CACHE_TTL_SECONDS)
+    tags: ["readability", "maintainability"]
+
+  - id: print_instead_of_logging
+    severity: info
+    category: maintainability
+    pattern: "Using print() instead of proper logging"
+    detection:
+      - type: regex
+        value: "\\bprint\\s*\\([^)]*(?:error|warn|debug|info|exception)"
+        files: ["*.py"]
+      - type: regex
+        value: "console\\.log\\([^)]*(?:error|warn|failed|exception)"
+        files: ["*.ts", "*.js"]
+    why: "Print statements lack log levels, timestamps, and structured output"
+    fix: "Use logging library with appropriate log levels"
+    examples:
+      bad: |
+        print(f"Error processing user {user_id}")
+      good: |
+        logger.error(f"Error processing user {user_id}", extra={"user_id": user_id})
+    tags: ["observability", "logging"]

@@ -1,0 +1,77 @@
+{
+  "version": "1.0.0",
+  "description": "Bridge Hub configuration for Claude Code <> Codex communication",
+
+  "cli": {
+    "claude": "claude",
+    "codex": "codex"
+  },
+
+  "directories": {
+    "logs": "{{HOME_DIR}}/.cache/catalyst/bridgehub/logs",
+    "state": "{{HOME_DIR}}/.cache/catalyst/bridgehub/state",
+    "runs": "{{CATALYST_ROOT}}/tools/bridgehub/.runs"
+  },
+
+  "guardrails": {
+    "tokenBudget": {
+      "perAction": 100000,
+      "perMinute": 200000,
+      "trackingWindow": 60000
+    },
+
+    "allowedPaths": [
+      "{{CATALYST_ROOT}}/capsules",
+      "{{CATALYST_ROOT}}/tools",
+      "{{CATALYST_ROOT}}/docs",
+      "{{CATALYST_ROOT}}/global",
+      "{{CATALYST_ROOT}}/PLANS",
+      "{{CATALYST_ROOT}}/BRIEFS",
+      "{{CATALYST_ROOT}}/ORDERS"
+    ],
+
+    "blockedPaths": [
+      "/System",
+      "/usr",
+      "/bin",
+      "/sbin",
+      "/etc",
+      "/private",
+      "{{HOME_DIR}}/.ssh",
+      "{{HOME_DIR}}/.aws"
+    ],
+
+    "sizeLimits": {
+      "maxInputSize": 5242880,
+      "maxOutputSize": 10485760,
+      "maxDiffSize": 2097152
+    },
+
+    "timeouts": {
+      "default_ms": 45000,
+      "review_actions_ms": 60000,
+      "long_doc_ms": 90000
+    },
+
+    "logging": {
+      "maxLogSize": 10485760,
+      "maxFiles": 7,
+      "totalSizeLimit": 52428800
+    }
+  },
+
+  "actionOverrides": {
+    "long_doc": {
+      "maxInputSize": 20971520,
+      "maxTokens": 200000
+    },
+    "peer_review": {
+      "maxTokens": 50000,
+      "requiresValidation": true
+    },
+    "freeform": {
+      "maxTokens": 100000,
+      "timeout_ms": 600000
+    }
+  }
+}

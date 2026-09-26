@@ -1,0 +1,237 @@
+listing_templates:
+  main_product:
+    title:
+      formula: "[Brand] [Product Name] - [Primary Benefit] - [Size/Quantity] - [Key Feature]"
+      max_length: 200
+      guidelines:
+        - "Include brand name first"
+        - "Lead with primary benefit"
+        - "Include size/quantity for clarity"
+        - "Use descriptive, searchable keywords"
+        - "Avoid ALL CAPS except brand name"
+      
+      examples:
+        good: "BRANDNAME Natural Skin Balm - Deep Moisturizing Protection - 2oz - Organic & Plant-Based"
+        bad: "BEST SKIN BALM EVER!!! AMAZING NATURAL ORGANIC 2 OZ PREMIUM QUALITY"
+    
+    bullet_points:
+      structure:
+        - benefit_focused: true
+        - feature_support: true
+        - use_case_examples: true
+        - social_proof_hints: true
+        - ingredient_callouts: true
+      
+      guidelines:
+        - "Start with benefit, support with feature"
+        - "Use concrete, specific language"
+        - "Include use cases/scenarios"
+        - "Mention key ingredients if relevant"
+        - "Keep under 1000 characters each"
+      
+      templates:
+        bullet_1:
+          format: "[Primary Benefit] - [Supporting Feature] for [Target Customer/Use Case]"
+          example: "Deep Moisturizing Protection - Plant-based botanical formula for outdoor enthusiasts and athletes"
+        
+        bullet_2:
+          format: "[Key Ingredient/Feature] - [Benefit] without [Common Problem]"
+          example: "100% Natural Ingredients - Effective skin care without harsh chemicals or synthetic additives"
+        
+        bullet_3:
+          format: "[Use Case] - Perfect for [Specific Situations/Activities]"
+          example: "All-Weather Protection - Ideal for hiking, skiing, construction work, and daily outdoor activities"
+        
+        bullet_4:
+          format: "[Quality/Source] - [Trust Signal] from [Origin/Process]"
+          example: "Ethically Sourced - Small-batch crafted from regenerative farms with traceable ingredients"
+        
+        bullet_5:
+          format: "[Customer Experience] - [Practical Benefit] that [Solves Problem]"
+          example: "Fast-Absorbing Formula - Non-greasy application that won't stain clothes or feel heavy"
+    
+    description:
+      structure:
+        sections:
+          - hero_paragraph: "Hook + primary benefit + credibility"
+          - ingredient_story: "What makes it special"
+          - use_cases: "When and how to use"
+          - benefits_details: "Expanded benefit explanations"
+          - quality_assurance: "Manufacturing, testing, guarantees"
+          - call_to_action: "Confidence-building close"
+      
+      content_guidelines:
+        - "Use short paragraphs (2-3 sentences max)"
+        - "Include emotional and rational appeals"
+        - "Address common objections/concerns"
+        - "Use sensory language when appropriate"
+        - "Include guarantee/return policy"
+      
+      template: |
+        Transform your skin's protection with [Product Name] - the premium [category] trusted by [target customers] who demand both performance and purity.
+        
+        What Makes It Special:
+        [Key differentiator expanded with story/science]
+        
+        Perfect For:
+        • [Use case 1 with specific scenario]
+        • [Use case 2 with specific scenario]  
+        • [Use case 3 with specific scenario]
+        
+        Why Customers Choose [Brand]:
+        [Quality story, sourcing, process that builds trust]
+        
+        Your Satisfaction Guaranteed:
+        [Return policy, customer service commitment]
+        
+        Join thousands of satisfied customers who've made [Product Name] their go-to solution for [primary need].
+    
+    backend_keywords:
+      strategy: "competitor_analysis + customer_language + problem_keywords"
+      categories:
+        primary_keywords: 
+          - "Direct product terms"
+          - "Category descriptors"
+        
+        competitor_keywords:
+          - "Competitor brand names"
+          - "Alternative product names"
+        
+        problem_keywords:
+          - "Customer pain points"
+          - "Problems solved"
+        
+        ingredient_keywords:
+          - "Key ingredients"
+          - "Natural/organic terms"
+        
+        use_case_keywords:
+          - "Activities/scenarios"
+          - "Target customer descriptors"
+      
+      guidelines:
+        - "Include misspellings of key terms"
+        - "Add plurals and variations"
+        - "Include related category terms"
+        - "Use customer language from reviews"
+        - "Avoid irrelevant high-volume terms"
+
+  variant_product:
+    title:
+      formula: "[Brand] [Product Name] - [Primary Benefit] - [Variant Attribute] - [Size/Quantity]"
+      variant_handling:
+        size_variants: "Include size in title"
+        color_variants: "Include color name"
+        scent_variants: "Include scent description"
+        bundle_variants: "Include bundle description"
+    
+    bullet_points:
+      variant_specific:
+        - "Highlight what makes this variant unique"
+        - "Maintain consistent brand benefits"
+        - "Address variant-specific use cases"
+        - "Include size/quantity guidance"
+    
+    backend_keywords:
+      variant_additions:
+        - "Size-specific terms (small, large, travel-size)"
+        - "Color descriptors and variations"
+        - "Scent/flavor related terms"
+        - "Bundle/set related keywords"
+
+image_specifications:
+  main_image:
+    requirements:
+      - "Pure white background (RGB 255,255,255)"
+      - "Product fills 85% of frame"
+      - "Minimum 1000x1000 pixels"
+      - "No text overlays or logos"
+      - "No props or lifestyle elements"
+    
+    optimization:
+      - "High contrast against white background"
+      - "Sharp focus throughout product"
+      - "Even lighting without harsh shadows"
+      - "Color accuracy for brand consistency"
+  
+  lifestyle_images:
+    concepts:
+      - in_use: "Product being used in natural setting"
+      - context: "Product in appropriate environment"
+      - scale: "Product with size reference objects"
+      - benefits: "Before/after or demonstration"
+      - ingredients: "Raw materials or sourcing"
+      - packaging: "Unboxing or gift presentation"
+    
+    requirements:
+      - "Minimum 1000x1000 pixels"
+      - "Professional lighting and composition"
+      - "Brand color palette integration"
+      - "Model diversity and authenticity"
+
+pricing_strategy:
+  competitive_analysis:
+    research_competitors:
+      - "Direct substitutes pricing"
+      - "Premium alternatives pricing"
+      - "Budget alternatives pricing"
+    
+    positioning_options:
+      premium: "15-25% above direct competitors"
+      competitive: "Within 10% of direct competitors"  
+      value: "10-20% below direct competitors"
+  
+  psychological_pricing:
+    price_endings:
+      premium_feel: ".00 endings"
+      value_perception: ".99 or .97 endings"
+      specific_value: ".95 endings"
+    
+    bundle_strategies:
+      quantity_discounts: "Buy 2, save 15%"
+      size_upsells: "Larger size 30% better value"
+      complementary_bundles: "Product + accessory bundles"
+
+launch_checklist:
+  pre_launch:
+    - "[ ] Keyword research completed"
+    - "[ ] Competitor analysis done"
+    - "[ ] All images meet requirements"
+    - "[ ] Title optimized for search and conversion"
+    - "[ ] Bullet points benefit-focused"
+    - "[ ] Description tells complete story"
+    - "[ ] Backend keywords maximized"
+    - "[ ] Pricing strategy confirmed"
+    - "[ ] Inventory levels set"
+    - "[ ] Brand registry completed"
+  
+  post_launch:
+    - "[ ] Monitor search ranking positions"
+    - "[ ] Track conversion rates"
+    - "[ ] Collect customer feedback"
+    - "[ ] Analyze competitor responses"
+    - "[ ] Optimize based on performance data"
+    - "[ ] Plan advertising campaigns"
+    - "[ ] Set up review monitoring"
+    - "[ ] Schedule content updates"
+
+performance_monitoring:
+  key_metrics:
+    - "Search ranking for target keywords"
+    - "Click-through rate from search"
+    - "Conversion rate (views to sales)"
+    - "Average selling price trends"
+    - "Review velocity and ratings"
+    - "Return/refund rates"
+  
+  optimization_triggers:
+    low_visibility: "Ranking below position 20 for main keywords"
+    low_conversion: "Conversion rate below category average"
+    negative_reviews: "Rating drops below 4.0 stars"
+    price_pressure: "Competitors undercut by 20%+"
+  
+  testing_schedule:
+    weekly: "Review performance metrics"
+    monthly: "Test title/bullet variations"
+    quarterly: "Major content updates"
+    annually: "Complete listing overhaul"

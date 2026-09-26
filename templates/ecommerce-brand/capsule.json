@@ -1,0 +1,167 @@
+{
+  "id": "",
+  "display_name": "",
+  "type": "ecommerce-brand",
+  "area": "ecommerce",
+  "description": "Brand management capsule with full lifecycle support",
+  "owners": ["{{USER_LOGIN}}"],
+  "created_at": "",
+  "version": "1.0.0",
+  
+  "state": {
+    "current": "ideation",
+    "history": [],
+    "transition_criteria": {
+      "pre-revenue": {
+        "identity_confidence": 0.7,
+        "assets_completeness": 0.6,
+        "market_research_depth": 0.5
+      },
+      "launching": {
+        "assets_completeness": 0.8,
+        "identity_crystallized": true,
+        "platform_ready": ["amazon"],
+        "readiness_score": 0.75
+      },
+      "active": {
+        "first_sale": true,
+        "inventory_system": true,
+        "metrics_flowing": true,
+        "operational_health": 0.8
+      },
+      "scaled": {
+        "monthly_revenue": 10000,
+        "platform_count": 3,
+        "automation_coverage": 0.9,
+        "optimization_active": true
+      }
+    }
+  },
+  
+  "platforms": {
+    "amazon": {
+      "enabled": false,
+      "seller_id": "",
+      "marketplace_ids": [],
+      "credentials_ref": "",
+      "health": 0.0,
+      "readiness": 0.0
+    },
+    "shopify": {
+      "enabled": false,
+      "store_domain": "",
+      "credentials_ref": "",
+      "health": 0.0,
+      "readiness": 0.0
+    },
+    "google_ads": {
+      "enabled": false,
+      "customer_id": "",
+      "credentials_ref": "",
+      "health": 0.0,
+      "readiness": 0.0
+    },
+    "tiktok_shop": {
+      "enabled": false,
+      "seller_id": "",
+      "credentials_ref": "",
+      "health": 0.0,
+      "readiness": 0.0
+    }
+  },
+  
+  "metrics": {
+    "brand_health": {
+      "identity_confidence": 0.0,
+      "asset_completeness": 0.0,
+      "market_research_depth": 0.0,
+      "brand_voice_consistency": 0.0
+    },
+    "preparation": {
+      "amazon_readiness": 0.0,
+      "shopify_readiness": 0.0,
+      "social_presence": 0.0,
+      "content_library": 0.0
+    },
+    "engagement": {
+      "website_visitors": 0,
+      "email_subscribers": 0,
+      "social_followers": 0,
+      "brand_mentions": 0
+    },
+    "financial": {
+      "monthly_revenue": 0,
+      "gross_margin": 0.0,
+      "customer_acquisition_cost": 0.0,
+      "lifetime_value": 0.0,
+      "roas": 0.0
+    },
+    "operational": {
+      "inventory_health": 0.0,
+      "fulfillment_speed": 0.0,
+      "customer_satisfaction": 0.0,
+      "platform_sync_health": 0.0
+    }
+  },
+  
+  "automation_hooks": {
+    "state_transitions": {
+      "entering_pre_revenue": {
+        "enabled": true,
+        "actions": ["setup_asset_monitoring", "initialize_metrics"]
+      },
+      "entering_launching": {
+        "enabled": true,
+        "actions": ["enable_listing_sync", "activate_basic_campaigns", "start_performance_tracking"]
+      },
+      "entering_active": {
+        "enabled": true,
+        "actions": ["enable_inventory_sync", "activate_full_automation", "setup_financial_tracking"]
+      },
+      "entering_scaled": {
+        "enabled": true,
+        "actions": ["enable_ai_optimization", "activate_predictive_analytics", "setup_cross_brand_learning"]
+      }
+    },
+    "operational_triggers": {
+      "competitor_price_change": {
+        "enabled": true,
+        "action": "notify_only",
+        "conditions": {"state": ["active", "scaled"]}
+      },
+      "inventory_low": {
+        "enabled": false,
+        "action": "create_reorder_capsule",
+        "conditions": {"state": ["active", "scaled"]}
+      },
+      "new_review": {
+        "enabled": true,
+        "action": "analyze_sentiment",
+        "conditions": {"state": ["launching", "active", "scaled"]}
+      },
+      "asset_optimization": {
+        "enabled": true,
+        "action": "auto_compress_and_tag",
+        "conditions": {"state": ["pre-revenue", "launching", "active", "scaled"]}
+      }
+    }
+  },
+  
+  "intelligence": {
+    "learning_enabled": true,
+    "cross_brand_insights": true,
+    "simulation_mode": false,
+    "ai_recommendations": true,
+    "pattern_recognition": true
+  },
+  
+  "risk_profile": {
+    "financial_exposure": "low",
+    "compliance_requirements": ["general"],
+    "platform_dependencies": [],
+    "supply_chain_complexity": "simple"
+  },
+  
+  "tags": ["ecommerce", "brand"],
+  "lane": "standard"
+}

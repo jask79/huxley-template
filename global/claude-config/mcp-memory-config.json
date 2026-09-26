@@ -1,0 +1,15 @@
+{
+  "memoryOptimization": {
+    "maxConcurrentServers": 5,
+    "serverStartupDelay": 1000,
+    "memoryThreshold": "6GB",
+    "restartOnMemoryLeak": true
+  },
+  "serverPriority": [
+    "filesystem",
+    "applescript", 
+    "snap-happy",
+    "davinci-resolve",
+    "blender"
+  ]
+}

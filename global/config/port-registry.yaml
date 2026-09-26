@@ -1,0 +1,109 @@
+# Port Registry — Single Source of Truth
+# All port assignments for Huxley services
+# Rule: Check this file BEFORE starting any service on any port
+#
+# Conventions:
+#   - Add every new service here BEFORE its first run
+#   - Vite configs, Docker compose files, and .env files must match this file
+#   - Suggested ranges: portals/dev servers 3100-3199, APIs 3200-3299,
+#     infrastructure 3400+ / 8000+
+
+# ─────────────────────────────────────────────────
+# Web Portals & Dev Servers
+# ─────────────────────────────────────────────────
+portals:
+  # EXAMPLE ENTRY — rename or delete once you create your first capsule
+  example-capsule:
+    port: 3100
+    description: "EXAMPLE — dev server for your first capsule (replace me)"
+    framework: Next.js
+
+# ─────────────────────────────────────────────────
+# APIs & Backend Services
+# ─────────────────────────────────────────────────
+apis:
+  # Shipped tool: tools/cartpanda/ webhook receiver (its README documents
+  # this reservation). Add your own capsule APIs below it.
+  cartpanda-webhook:
+    port: 3201
+    description: "CartPanda webhook receiver (tools/cartpanda)"
+    framework: FastAPI/uvicorn
+
+  # EXAMPLE ENTRY — rename or delete once you create your first API
+  example-api:
+    port: 3202
+    description: "EXAMPLE — API server for your first capsule (replace me)"
+    framework: FastAPI/uvicorn
+
+  # Shipped tool: SDK webhook server (tools/sdk/webhook_server.py;
+  # deployment notes in tools/sdk/WEBHOOK_SERVER.md)
+  sdk-webhook:
+    port: 5000
+    description: "SDK webhook server (tools/sdk/webhook_server.py)"
+    framework: Python (gunicorn)
+
+# ─────────────────────────────────────────────────
+# Infrastructure Services (framework-level)
+# ─────────────────────────────────────────────────
+infrastructure:
+  claude-code-router:
+    port: 3456
+    description: Claude Code Router (Infinity mode)
+    framework: Express
+
+  bifrost-gateway:
+    port: 8083
+    description: Bifrost LLM gateway (Infinity mode routing to alternate providers)
+    framework: Go
+
+  agent-memory:
+    port: 8090
+    description: Agent memory MCP (ChromaDB)
+    framework: Python
+
+  anthropic-shim:
+    port: 3000
+    description: "Anthropic→OpenRouter shim (tools/gateways/anthropic-shim; PORT env overrides, binds 127.0.0.1)"
+    framework: Node/Fastify
+
+  oauth-callback-canva:
+    port: 3003
+    description: "Canva API OAuth callback (tools/canva_api.py)"
+    framework: Python
+
+  obs-websocket:
+    port: 4455
+    description: "OBS Studio WebSocket server (external app default; tools/obs_cli.py connects to it)"
+    framework: OBS Studio
+
+  weaviate-gossip:
+    port: 7946
+    description: "Weaviate cluster gossip bind (internal; tools/weaviate/start-weaviate.sh)"
+    framework: Weaviate
+
+  weaviate-data:
+    port: 7947
+    description: "Weaviate cluster data bind (internal; tools/weaviate/start-weaviate.sh)"
+    framework: Weaviate
+
+  weaviate:
+    port: 8082
+    description: "Weaviate vector DB HTTP API (tools/weaviate/start-weaviate.sh; loopback only)"
+    framework: Weaviate
+
+  oauth-callback-youtube:
+    port: 8085
+    description: "YouTube API OAuth callback (tools/youtube-api/youtube-api.py)"
+    framework: Python
+
+  bifrost-metrics-exporter:
+    port: 9091
+    description: "Bifrost Prometheus metrics exporter (tools/start-infinity-gateway.sh)"
+    framework: Go
+
+  pushgateway:
+    port: 9092
+    description: "Prometheus Pushgateway (core/native/catalyst-daemons service-health-push reports here)"
+    framework: Prometheus
+
+  # Note: catalyst-mcp (tools/catalyst-mcp) runs over stdio and needs no port.

@@ -1,0 +1,211 @@
+// Jenkinsfile - iOS Testing Pipeline
+// Place this file at: Jenkinsfile
+
+pipeline {
+    agent {
+        label 'macos'
+    }
+
+    parameters {
+        choice(
+            name: 'TEST_PRESET',
+            choices: ['minimal', 'accessibility', 'network', 'comprehensive'],
+            description: 'Test matrix preset to run'
+        )
+        booleanParam(
+            name: 'RUN_VISUAL_REGRESSION',
+            defaultValue: true,
+            description: 'Run visual regression tests'
+        )
+        booleanParam(
+            name: 'RUN_NETWORK_ANALYSIS',
+            defaultValue: true,
+            description: 'Analyze network logs'
+        )
+    }
+
+    environment {
+        SCHEME = 'MyApp'
+        BUNDLE_ID = 'com.example.MyApp'
+        SIMULATOR = 'iPhone 16'
+        PYTHONPATH = '/usr/local/lib/python3.9/site-packages'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                echo '🔧 Installing dependencies...'
+                sh '''
+                    pip3 install Pillow numpy
+                    gem install json
+                '''
+            }
+        }
+
+        stage('Boot Simulator') {
+            steps {
+                echo '📱 Booting simulator...'
+                sh '''
+                    xcrun simctl boot "$SIMULATOR" || true
+                    sleep 10
+                '''
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo '🔨 Building app...'
+                sh '''
+                    xcodebuild build \
+                        -scheme $SCHEME \
+                        -destination "platform=iOS Simulator,name=$SIMULATOR" \
+                        -configuration Debug \
+                        | xcpretty
+                '''
+            }
+        }
+
+        stage('Test Matrix') {
+            steps {
+                echo "🧪 Running test matrix: ${params.TEST_PRESET}"
+                sh """
+                    cd testing
+                    ./scripts/run-matrix-tests.sh ${params.TEST_PRESET}
+                """
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "testing/test-results/${params.TEST_PRESET}",
+                        reportFiles: 'report.html',
+                        reportName: 'Test Matrix Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Visual Regression') {
+            when {
+                expression { params.RUN_VISUAL_REGRESSION }
+            }
+            steps {
+                echo '🖼️  Running visual regression tests...'
+                sh '''
+                    cd testing
+                    if [ -d baseline-screenshots ] && [ -n "$(ls -A baseline-screenshots)" ]; then
+                        ./scripts/run-visual-diff.sh
+                    else
+                        echo "⚠️  No baseline screenshots - skipping"
+                    fi
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'testing/test-results',
+                        reportFiles: 'visual-diff-*/report.html',
+                        reportName: 'Visual Regression Report'
+                    ])
+                }
+                failure {
+                    script {
+                        def diffCount = sh(
+                            script: '''
+                                if [ -f testing/test-results/visual-diff-*/diff-results.json ]; then
+                                    cat testing/test-results/visual-diff-*/diff-results.json | jq '.different'
+                                else
+                                    echo "0"
+                                fi
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
+                        if (diffCount.toInteger() > 0) {
+                            error "❌ ${diffCount} visual regressions detected"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Network Analysis') {
+            when {
+                expression { params.RUN_NETWORK_ANALYSIS }
+            }
+            steps {
+                echo '🌐 Analyzing network logs...'
+                sh '''
+                    cd testing
+                    ./scripts/analyze-network.sh || true
+                '''
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'testing/test-results',
+                        reportFiles: 'network-analysis-*.html',
+                        reportName: 'Network Analysis Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Generate Summary') {
+            steps {
+                echo '📊 Generating test summary...'
+                sh '''
+                    cd testing/test-results
+                    cat > JENKINS_SUMMARY.md << EOF
+# iOS Testing Results - Build #${BUILD_NUMBER}
+
+## Test Matrix
+- Preset: ${TEST_PRESET}
+- [View Report](${TEST_PRESET}/report.html)
+
+## Visual Regression
+- Status: ${RUN_VISUAL_REGRESSION ? "Enabled" : "Skipped"}
+- [View Report](visual-diff-*/report.html)
+
+## Network Analysis
+- Status: ${RUN_NETWORK_ANALYSIS ? "Enabled" : "Skipped"}
+- [View Report](network-analysis-*.html)
+
+## Build Info
+- Build: #${BUILD_NUMBER}
+- Branch: ${GIT_BRANCH}
+- Commit: ${GIT_COMMIT}
+EOF
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'testing/test-results/**', fingerprint: true
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '🧹 Cleaning up...'
+            sh '''
+                xcrun simctl shutdown "$SIMULATOR" || true
+            '''
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
+    }
+}

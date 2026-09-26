@@ -1,0 +1,9 @@
+{
+  "servers": [
+    {"name": "filesystem"},
+    {"name": "git"},
+    {"name": "http"},
+    {"name": "keychain-presence"},
+    {"name": "ccmem"}
+  ]
+}

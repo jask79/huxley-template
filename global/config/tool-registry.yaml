@@ -1,0 +1,186 @@
+# Huxley Tool Registry
+# Canonical list of operational tools. Used by `tools/list-tools.py` and `/tools` command.
+# Only includes tools that are actively used — not legacy/one-off scripts.
+#
+# Format per tool:
+#   name: Display name
+#   emoji: Icon
+#   path: Relative path from Huxley root
+#   skill: Slash-command skill name (if any)
+#   agents: Comma-separated agent names that use this tool
+#   status: active | dormant
+
+tools:
+
+  media:
+    media-engine:
+      name: Media Engine
+      emoji: 🎬
+      path: tools/media-engine/cli.py
+      skill: media-engine
+      agents: Graphic Designer, Camera Man
+      status: active
+
+    nano-banana:
+      name: Nano Banana (Gemini + Veo 3.1)
+      emoji: 🍌
+      path: /opt/homebrew/bin/nano-banana
+      skill: nano-banana
+      agents: Camera Man, Graphic Designer
+      status: active
+
+    color-grader:
+      name: Color Grader
+      emoji: 🎨
+      path: tools/color_grader.py
+      skill: color-grading
+      agents: Studio Engineer
+      status: active
+
+    obs-cli:
+      name: OBS Studio CLI
+      emoji: 🔴
+      path: tools/obs_cli.py
+      skill: obs-cli
+      agents: Studio Engineer
+      status: active
+
+    davinci-resolve:
+      name: DaVinci Resolve CLI
+      emoji: 🎞
+      path: tools/davinci_resolve.py
+      skill: davinci-resolve
+      agents: Studio Engineer
+      status: active
+
+    canva-api:
+      name: Canva API
+      emoji: 🖌
+      path: tools/canva_api.py
+      skill: canva-api
+      agents: Graphic Designer, Brand Specialist
+      status: active
+
+  social-intel:
+    youtube-intel:
+      name: YouTube Intel
+      emoji: 📊
+      path: tools/youtube-intel/cli.py
+      skill: youtube-intel
+      agents: CMO, Research Agent
+      status: active
+
+    tiktok-intel:
+      name: TikTok Intel
+      emoji: 📈
+      path: tools/tiktok-intel/cli.py
+      skill: tiktok-intel
+      agents: CMO, Ecomm Bro, Research Agent
+      status: active
+
+  social-ops:
+    youtube-api:
+      name: YouTube API
+      emoji: 📹
+      path: tools/youtube-api/youtube-api.py
+      skill: youtube-api
+      agents: CMO, Automator
+      status: active
+
+    meta-api:
+      name: Meta (Facebook/Instagram) API
+      emoji: 📱
+      path: tools/meta-api.py
+      agents: CMO
+      status: active
+
+  productivity:
+    file-organizer:
+      name: File Organizer
+      emoji: 📁
+      path: tools/file-organizer/organize.py
+      skill: file-organizer
+      agents: Automator, 2nd Brain Wizard
+      status: active
+
+    yt-transcript:
+      name: YouTube Transcript
+      emoji: 📝
+      path: tools/yt-transcript
+      skill: yt-transcript
+      agents: "{{ORCHESTRATOR_NAME}}"
+      status: active
+
+    product-sourcing:
+      name: Product Sourcing
+      emoji: 🛍
+      path: tools/product-sourcing/cli.py
+      skill: product-sourcing
+      agents: Sourcerer
+      status: active
+
+  security:
+    virustotal:
+      name: VirusTotal Scanner
+      emoji: 🔍
+      path: tools/virustotal_scan.py
+      skill: virustotal-scan
+      agents: Security Analyst
+      status: active
+
+  dev-tools:
+    apple-provision:
+      name: Apple Provisioning
+      emoji: 🍎
+      path: tools/apple_provision.py
+      skill: apple-provision
+      agents: Mobile Dev, macOS Dev
+      status: active
+
+    codex-consult:
+      name: Codex Consultation
+      emoji: 🌉
+      path: tools/codex-consult.sh
+      skill: null
+      agents: "{{ORCHESTRATOR_NAME}}"
+      status: active
+
+    gitnexus:
+      name: GitNexus Code Intelligence
+      emoji: 🧠
+      path: .gitnexus/
+      skill: null
+      agents: Debugger, Code Reviewer
+      status: dormant  # requires the external GitNexus CLI + a gitnexus MCP server entry in .mcp.json
+
+  system:
+    mac-maintenance:
+      name: Mac Maintenance
+      emoji: 🧹
+      path: tools/mac-maintenance.sh
+      skill: mac-maintenance
+      agents: "{{ORCHESTRATOR_NAME}}"
+      status: active
+
+    check-secrets:
+      name: Secret Checker
+      emoji: 🔐
+      path: tools/check-secrets.py
+      skill: null
+      agents: "{{ORCHESTRATOR_NAME}}"
+      status: active
+
+  registries:
+    domain-registry:
+      name: Domain Registry
+      emoji: 🌐
+      path: tools/domain-registry/cli.py
+      agents: "{{ORCHESTRATOR_NAME}}, Backend Dev"
+      status: active
+
+    email-registry:
+      name: Email Registry
+      emoji: 📧
+      path: tools/email-registry/cli.py
+      agents: "{{ORCHESTRATOR_NAME}}, Automator"
+      status: active

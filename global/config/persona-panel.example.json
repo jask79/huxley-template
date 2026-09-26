@@ -1,0 +1,95 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-01-01",
+  "description": "EXAMPLE synthetic customer personas for capsule portfolio validation. Copy to persona-panel.json and replace with personas matched to YOUR products.",
+  "personas": [
+    {
+      "id": "solo-saas-founder",
+      "name": "Jordan Reyes",
+      "archetype": "Solo SaaS Founder",
+      "demographics": {
+        "age": 32,
+        "location": "Austin, TX",
+        "household": "Single, lives alone",
+        "income": "$95K — day job plus ~$800/month from a side SaaS",
+        "techSavvy": 9
+      },
+      "psychographics": {
+        "goals": [
+          "Grow the side SaaS to full-time income within two years",
+          "Automate support and marketing so nights stay free for building",
+          "Validate new feature ideas before writing any code",
+          "Keep monthly tool spend under $200"
+        ],
+        "frustrations": [
+          "Tools that require a sales call before showing pricing",
+          "Analytics dashboards that need a data team to interpret",
+          "Losing weekends to infrastructure instead of product",
+          "Newsletters and courses that repackage obvious advice"
+        ],
+        "values": [
+          "Ship small and iterate over polishing in private",
+          "Own the stack — export everything, no lock-in",
+          "Evidence over opinions when prioritizing features",
+          "Sustainable pace over hustle-culture burnout"
+        ],
+        "buyingBehavior": "Discovers tools on Hacker News, IndieHackers, and developer Discords. Signs up for free tiers immediately, upgrades within a week if the tool sticks. Cancels ruthlessly at renewal if usage dropped. Prefers monthly billing until a tool proves itself for a full quarter."
+      },
+      "relevantCapsules": ["example-capsule"],
+      "willingnessToPay": {
+        "monthly_saas": "$10-$40",
+        "one_time_tool": "$30-$100",
+        "course_or_content": "$0-$50 (only from builders with public track records)"
+      },
+      "validationQuestions": [
+        "Can Jordan get to first value in a single evening session without reading docs?",
+        "Does this replace an existing line item in Jordan's tool budget, or add a new one?",
+        "Would Jordan still pay for this in a month where the side SaaS made $0?"
+      ]
+    },
+    {
+      "id": "small-agency-ops-manager",
+      "name": "Priya Nathan",
+      "archetype": "Small Agency Ops Manager",
+      "demographics": {
+        "age": 41,
+        "location": "Columbus, OH",
+        "household": "Married, one teenager",
+        "income": "$88K salary at a 12-person marketing agency",
+        "techSavvy": 5
+      },
+      "psychographics": {
+        "goals": [
+          "Cut the hours spent on repetitive client reporting each month",
+          "Standardize processes so new hires ramp in days, not months",
+          "Look competent to the agency owner by finding tools that save money",
+          "Avoid anything that requires involving the (outsourced) IT contractor"
+        ],
+        "frustrations": [
+          "Software that requires admin setup she is not authorized to do",
+          "Per-seat pricing that punishes adding junior staff",
+          "Migrations — she has been burned by two CRM switches",
+          "Vendors that go quiet after the sale"
+        ],
+        "values": [
+          "Reliability over novelty — boring tools that just work",
+          "Clear documentation and responsive human support",
+          "Predictable pricing she can defend in a budget meeting",
+          "Vendor stability — will the company exist in three years?"
+        ],
+        "buyingBehavior": "Researches via G2 reviews, peer recommendations in ops communities, and vendor comparison pages. Builds a shortlist of three, trials the top pick with one client account, then writes a one-page recommendation for the business owner. Buys annual plans for the discount once trust is established."
+      },
+      "relevantCapsules": ["example-capsule"],
+      "willingnessToPay": {
+        "monthly_saas": "$50-$300 (company card, needs owner sign-off above $150)",
+        "one_time_tool": "$100-$500",
+        "course_or_content": "$0-$200 (training budget exists but is scrutinized)"
+      },
+      "validationQuestions": [
+        "Can Priya trial this on one client account without a company-wide rollout?",
+        "Does the pricing page give her a number she can put in a budget email today?",
+        "If the tool disappeared in six months, how painful is the migration out?"
+      ]
+    }
+  ]
+}

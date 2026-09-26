@@ -1,0 +1,93 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "{{CATALYST_ROOT}}",
+        "/tmp"
+      ]
+    },
+    "builder-memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_STORAGE_PATH": "{{HOME_DIR}}/.claude/mcp-data/builder-memory.json"
+      }
+    },
+    "applescript": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-applescript"
+      ]
+    },
+    "siri-shortcuts": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-siri-shortcuts"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "chromium"
+      ],
+      "env": {
+        "PLAYWRIGHT_MCP_BROWSER": "chromium",
+        "PLAYWRIGHT_MCP_HEADLESS": "true"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest",
+        "--transport",
+        "stdio"
+      ],
+      "env": {}
+    },
+    "airtable": {
+      "command": "airtable-mcp-server",
+      "args": [],
+      "env": {
+        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
+      }
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}",
+        "ghcr.io/github/github-mcp-server:latest"
+      ]
+    },
+    "cloudflare-browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://browser.mcp.cloudflare.com/sse"
+      ]
+    },
+    "cloudflare-radar": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://radar.mcp.cloudflare.com/sse"
+      ]
+    }
+  }
+}

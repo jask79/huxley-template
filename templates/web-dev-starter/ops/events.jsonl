@@ -1,0 +1,2 @@
+{"timestamp": "{{TIMESTAMP}}", "event": "capsule_created", "slug": "{{CAPSULE_SLUG}}", "metadata": {"template": "capsule-base", "version": "2.0"}}
+{"timestamp": "{{TIMESTAMP}}", "event": "template_applied", "slug": "{{CAPSULE_SLUG}}", "metadata": {"branch": "{{BRANCH}}", "lane": "{{LANE}}", "mcp_profile": "{{MCP_PROFILE}}"}}

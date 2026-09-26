@@ -1,0 +1,12 @@
+{
+  "GitHub Huxley MCP": {
+    "roles": ["planner", "reviewer"],
+    "default_mode": "read",
+    "notes": "Executor may request write via override"
+  },
+  "External Docs via GitMCP": {
+    "roles": ["system architect", "frontend specialist"],
+    "default_mode": "read"
+  }
+}
+

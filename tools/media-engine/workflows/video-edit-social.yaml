@@ -1,0 +1,47 @@
+name: Video Edit Social
+media_type: video-edit
+profile: fast-draft
+
+generation:
+  resolution: 1080p
+  aspect_ratios:
+    - "9:16"
+  fps: 30
+
+timeline:
+  transition_type: cut
+  transition_duration: 0
+  max_duration: 60
+  export_formats:
+    - otio
+    - fcpxml
+
+render:
+  enabled: true
+  codec: h264
+  bitrate: "6M"
+  format: mp4
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.70
+  evaluate_criteria:
+    - edit_pacing
+    - overall_quality
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - not_corrupted
+
+output:
+  directory: "generated-media/{date}/video-edit/"
+  naming: "{workflow}-social-{sequence}"
+  formats:
+    - otio
+    - fcpxml
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

@@ -1,0 +1,69 @@
+# Automation Capsule Metadata
+
+# Core identification
+name: "{{AUTOMATION_NAME}}"
+slug: "{{AUTOMATION_SLUG}}"
+version: "0.1.0"
+created: "{{CREATION_DATE}}"
+
+# Routing configuration
+routing:
+  branch: "automation"
+  targets: ["n8n", "applescript", "shortcuts", "macos"]
+  priority: "normal"
+
+# Agent preferences  
+agents:
+  primary: ["automation-specialist"]
+  secondary: ["security-auditor", "test-automator"]
+  exclude: []
+
+# MCP configuration
+mcp:
+  profile: "automation"
+  additional: []
+  exclude: []
+
+# Quality gates
+quality:
+  dod_level: "minimal"
+  test_coverage: 60
+  security_scan: true
+  performance_benchmark: false
+
+# Context and domain
+domain:
+  type: "personal"               # Most automations are personal
+  category: "automation"
+  complexity: "simple"
+  stakeholders: ["{{USER_NAME}}"]
+
+# Integration points
+integrations:
+  external_apis: []
+  databases: []
+  cloud_services: []
+  third_party_tools: []
+
+# Deployment and lifecycle
+deployment:
+  targets: ["{{DEPLOY_TARGETS}}"]     # local, staging, production
+  automation: "{{DEPLOY_AUTO}}"       # manual, semi, full
+  rollback_strategy: "{{ROLLBACK}}"   # none, manual, auto
+
+# Resource requirements
+resources:
+  estimated_hours: "{{EST_HOURS}}"
+  team_size: "{{TEAM_SIZE}}"
+  budget: "{{BUDGET}}"
+  deadline: "{{DEADLINE}}"
+
+# Tags for discovery and organization
+tags: ["{{TAGS}}"]
+
+# Huxley metadata
+builder:
+  template_version: "2.0"
+  created_by_template: "capsule-base"
+  routing_version: "1.0"
+  mcp_version: "1.0"

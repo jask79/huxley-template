@@ -1,0 +1,64 @@
+name: Logo Combination Mark
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 4K
+  aspect_ratios:
+    - "4:1"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - icon_wordmark_balance
+    - visual_harmony
+    - brand_consistency
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - pdf
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: combination
+  stroke_weight: 2
+  corner_radius: 4
+  icon_style: "filled"
+  file_size_limit_kb: 500
+  export_formats:
+    - svg
+    - pdf
+    - png
+  palette:
+    primary: "#2563EB"
+    secondary: "#7C3AED"
+    accent: "#F59E0B"
+    foreground: "#111827"
+    background: "#FFFFFF"
+    neutral: "#6B7280"

@@ -1,0 +1,199 @@
+# Rust Sharp Edges
+# Production gotchas for Rust services, memory safety, and async patterns
+
+edges:
+  # === CRITICAL: Safety ===
+
+  - id: unsafe_without_justification
+    severity: critical
+    category: security
+    pattern: "Unsafe block without safety comment"
+    detection:
+      - type: regex
+        value: 'unsafe\s*\{(?!\s*//\s*SAFETY:)'
+        files: ["*.rs"]
+    why: "Unsafe blocks bypass Rust's safety guarantees — must document invariants"
+    fix: "Add // SAFETY: comment explaining why this is sound"
+    examples:
+      bad: |
+        unsafe {
+            ptr::write(dst, src);
+        }
+      good: |
+        // SAFETY: dst is valid, aligned, and non-overlapping with src
+        // because we allocated it above with Layout::new::<T>()
+        unsafe {
+            ptr::write(dst, src);
+        }
+    tags: ["unsafe", "memory-safety"]
+
+  - id: transmute_usage
+    severity: critical
+    category: security
+    pattern: "std::mem::transmute usage"
+    detection:
+      - type: regex
+        value: 'mem::transmute|std::mem::transmute'
+        files: ["*.rs"]
+    why: "transmute bypasses all type checking — easy to cause UB"
+    fix: "Use safe alternatives: From/Into, as casts, bytemuck, or zerocopy"
+    tags: ["unsafe", "type-safety"]
+
+  # === CRITICAL: Error Handling ===
+
+  - id: unwrap_in_production
+    severity: critical
+    category: correctness
+    pattern: "unwrap() or expect() in non-test production code"
+    detection:
+      - type: regex
+        value: '\.unwrap\(\)|\.expect\('
+        files: ["*.rs"]
+    why: "unwrap/expect panics on None/Err — crashes the process"
+    fix: "Use ? operator, match, unwrap_or, unwrap_or_else, or map_err"
+    examples:
+      bad: |
+        let config = fs::read_to_string("config.toml").unwrap();
+        let port: u16 = env::var("PORT").unwrap().parse().unwrap();
+      good: |
+        let config = fs::read_to_string("config.toml")
+            .context("Failed to read config")?;
+        let port: u16 = env::var("PORT")
+            .unwrap_or_else(|_| "8080".to_string())
+            .parse()
+            .context("Invalid PORT")?;
+    tags: ["error-handling", "panic"]
+
+  - id: panic_in_library
+    severity: critical
+    category: correctness
+    pattern: "panic!/todo!/unimplemented! in library code"
+    detection:
+      - type: regex
+        value: '\b(?:panic!|todo!|unimplemented!)\s*\('
+        files: ["*.rs"]
+    why: "Panics in libraries crash the caller with no recovery"
+    fix: "Return Result<T, E> instead — let callers handle errors"
+    tags: ["error-handling", "library"]
+
+  # === WARNING: Async ===
+
+  - id: blocking_in_async
+    severity: warning
+    category: performance
+    pattern: "Blocking operation in async context"
+    detection:
+      - type: semantic
+        description: "std::fs, std::net, thread::sleep, or synchronous I/O inside an async fn or .await block — blocks the tokio runtime thread"
+    why: "Blocking calls starve the async runtime, degrading all concurrent tasks"
+    fix: "Use tokio::fs, tokio::net, tokio::time::sleep, or spawn_blocking"
+    examples:
+      bad: |
+        async fn read_config() -> String {
+            std::fs::read_to_string("config.toml").unwrap()
+        }
+      good: |
+        async fn read_config() -> Result<String> {
+            tokio::fs::read_to_string("config.toml").await
+        }
+    tags: ["async", "tokio"]
+
+  - id: async_mutex_across_await
+    severity: warning
+    category: correctness
+    pattern: "std::sync::Mutex held across .await"
+    detection:
+      - type: regex
+        value: '\.lock\(\)[\s\S]*\.await'
+        files: ["*.rs"]
+      - type: semantic
+        description: "std::sync::Mutex guard held across an await point — can deadlock or starve"
+    why: "std::sync::Mutex is not async-aware — holding across await blocks the thread"
+    fix: "Use tokio::sync::Mutex, or drop the guard before await"
+    examples:
+      bad: |
+        let guard = data.lock().unwrap();
+        let result = fetch(guard.url).await;
+      good: |
+        let url = {
+            let guard = data.lock().unwrap();
+            guard.url.clone()
+        };
+        let result = fetch(url).await;
+    tags: ["async", "mutex", "deadlock"]
+
+  # === WARNING: Memory & Performance ===
+
+  - id: clone_in_loop
+    severity: warning
+    category: performance
+    pattern: "Cloning in a hot loop"
+    detection:
+      - type: semantic
+        description: "Calling .clone() on a non-trivial type inside a loop body"
+    why: "Excessive cloning causes allocation pressure and GC-like pauses"
+    fix: "Use references, Cow<T>, Arc<T>, or restructure to avoid cloning"
+    tags: ["performance", "allocation"]
+
+  - id: string_format_in_loop
+    severity: warning
+    category: performance
+    pattern: "String formatting with format! in a hot loop"
+    detection:
+      - type: regex
+        value: 'for\s+[\s\S]*\{[\s\S]*format!\s*\('
+        files: ["*.rs"]
+    why: "format! allocates a new String each call — use write! with a buffer"
+    fix: "Pre-allocate a String and use write!() or push_str()"
+    tags: ["performance", "allocation"]
+
+  - id: box_large_future
+    severity: info
+    category: performance
+    pattern: "Large future on the stack"
+    detection:
+      - type: semantic
+        description: "async fn returning a future larger than ~4KB — causes stack overflow in deep call chains"
+    why: "Futures are stack-allocated by default — large ones can blow the stack"
+    fix: "Box::pin large futures, or use #[async_recursion]"
+    tags: ["async", "stack"]
+
+  # === WARNING: Concurrency ===
+
+  - id: arc_mutex_pattern
+    severity: info
+    category: maintainability
+    pattern: "Arc<Mutex<T>> when Arc<RwLock<T>> would be better"
+    detection:
+      - type: regex
+        value: 'Arc<Mutex<'
+        files: ["*.rs"]
+    why: "Mutex blocks all readers — RwLock allows concurrent reads"
+    fix: "Use Arc<RwLock<T>> if reads far outnumber writes"
+    tags: ["concurrency", "performance"]
+
+  # === INFO: Best Practices ===
+
+  - id: clippy_allow_without_reason
+    severity: info
+    category: maintainability
+    pattern: "#[allow(...)] without reason"
+    detection:
+      - type: regex
+        value: '#\[allow\([^)]+\)\](?!\s*//)'
+        files: ["*.rs"]
+    why: "Suppressed warnings without explanation hide real issues"
+    fix: "Add a comment explaining why the lint is suppressed"
+    tags: ["linting", "documentation"]
+
+  - id: dbg_macro_in_production
+    severity: info
+    category: maintainability
+    pattern: "dbg! macro in production code"
+    detection:
+      - type: regex
+        value: '\bdbg!\s*\('
+        files: ["*.rs"]
+    why: "dbg! writes to stderr and should not ship to production"
+    fix: "Use tracing::debug! or log::debug! instead"
+    tags: ["debugging", "production"]

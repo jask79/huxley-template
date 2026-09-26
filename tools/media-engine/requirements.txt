@@ -1,0 +1,15 @@
+pyyaml>=6.0
+svgwrite>=1.4
+svgpathtools>=1.6
+cairosvg>=2.7
+lxml>=4.9
+av>=12.0
+opentimelineio>=0.17
+Pillow>=10.0
+# Gemini auth (gemini_oauth + google_ai_studio modes)
+google-genai>=1.0
+google-auth>=2.0
+google-auth-oauthlib>=1.0
+# Phase 4: Optional — AI-to-vector tracing (pip3 install vtracer)
+# vtracer>=0.6
+# Optional: MLT timeline rendering (brew install mlt)

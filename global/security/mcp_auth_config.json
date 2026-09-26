@@ -1,0 +1,103 @@
+{
+  "mcp_security_config": {
+    "version": "1.0",
+    "authentication": {
+      "enabled": true,
+      "method": "jwt_token",
+      "token_expiry": 3600,
+      "refresh_token_expiry": 86400,
+      "require_mfa": false,
+      "jwt_signing_key_source": "keychain",
+      "keychain_service": "huxley.system.global.jwt_signing_key"
+    },
+    "authorization": {
+      "enabled": true,
+      "model": "rbac",
+      "default_role": "capsule_user",
+      "roles": {
+        "capsule_user": {
+          "permissions": ["read_capsule", "write_capsule_own", "execute_standard"],
+          "mcp_servers": ["filesystem", "git", "http"],
+          "resource_limits": {
+            "max_concurrent_operations": 5,
+            "max_memory_mb": 100,
+            "max_execution_time_seconds": 300
+          }
+        },
+        "capsule_admin": {
+          "permissions": ["read_capsule", "write_capsule_any", "execute_standard", "manage_agents"],
+          "mcp_servers": ["filesystem", "git", "http", "applescript", "n8n", "shadcn-ui"],
+          "resource_limits": {
+            "max_concurrent_operations": 20,
+            "max_memory_mb": 500,
+            "max_execution_time_seconds": 1800
+          }
+        },
+        "system_admin": {
+          "permissions": ["*"],
+          "mcp_servers": ["*"],
+          "resource_limits": {
+            "max_concurrent_operations": -1,
+            "max_memory_mb": -1,
+            "max_execution_time_seconds": -1
+          }
+        }
+      }
+    },
+    "server_registry": {
+      "whitelist_enabled": true,
+      "allowed_servers": [
+        {
+          "name": "filesystem",
+          "endpoint": "unix:///tmp/mcp-filesystem.sock",
+          "certificate_fingerprint": "sha256:abc123...",
+          "allowed_operations": ["read", "write", "list"],
+          "security_level": "standard"
+        },
+        {
+          "name": "git", 
+          "endpoint": "unix:///tmp/mcp-git.sock",
+          "certificate_fingerprint": "sha256:def456...",
+          "allowed_operations": ["read", "write", "commit"],
+          "security_level": "standard"
+        },
+        {
+          "name": "applescript",
+          "endpoint": "unix:///tmp/mcp-applescript.sock", 
+          "certificate_fingerprint": "sha256:ghi789...",
+          "allowed_operations": ["execute"],
+          "security_level": "high_privilege"
+        }
+      ],
+      "signature_verification": true,
+      "tls_required": true,
+      "tls_version_min": "1.3"
+    },
+    "audit_logging": {
+      "enabled": true,
+      "log_level": "info",
+      "log_file": "{{CATALYST_ROOT}}/registry/logs/mcp_security.log",
+      "rotate_size_mb": 100,
+      "retention_days": 90,
+      "log_events": [
+        "authentication_attempt",
+        "authorization_check",
+        "server_registration",
+        "privilege_escalation",
+        "security_violation"
+      ]
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60,
+      "burst_limit": 10,
+      "ban_duration_minutes": 15
+    },
+    "intrusion_detection": {
+      "enabled": true,
+      "max_failed_auth_attempts": 5,
+      "lockout_duration_minutes": 30,
+      "alert_on_suspicious_activity": true
+    }
+  }
+}

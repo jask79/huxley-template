@@ -1,0 +1,51 @@
+name: Product Photography
+media_type: image
+model: google/gemini-3-pro-image-preview
+auth: openrouter
+auth_provider: openrouter
+profile: high-fidelity
+
+generation:
+  resolution: 4K
+  aspect_ratios:
+    - "1:1"
+    - "4:3"
+    - "16:9"
+
+refinement:
+  mode: autonomous
+  max_iterations: 5
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - lighting_consistency
+    - text_legibility
+    - brand_alignment
+    - background_cleanliness
+    - product_focus
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - resolution_match
+    - no_artifacts
+
+consistency:
+  reference_images: 6
+  style_weight: 0.7
+  character_lock: false
+
+variants:
+  count: 5
+  variation_strength: 0.3
+
+output:
+  directory: "generated-media/{capsule}/{date}/"
+  naming: "{workflow}-{sequence}-{resolution}"
+  formats:
+    - png
+    - webp
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

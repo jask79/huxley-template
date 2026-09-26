@@ -1,0 +1,125 @@
+{
+  "name": "SDK Workflow - Scheduled Execution",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "cron-trigger-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/webhook/trigger",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "workflow",
+              "value": "daily_audit"
+            },
+            {
+              "name": "parameters",
+              "value": "={{ { \"dry_run\": false, \"verbose\": true } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Trigger SDK Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "id": "trigger-workflow-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/webhook/observe",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "workflow",
+              "value": "n8n_scheduler"
+            },
+            {
+              "name": "observation",
+              "value": "Scheduled workflow triggered successfully"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ { \"trigger_time\": $now, \"observation_id\": $json.observation_id } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300],
+      "id": "log-execution-node"
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger SDK Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger SDK Workflow": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

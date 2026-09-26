@@ -1,0 +1,27 @@
+name: Batch Production
+description: Balanced quality and speed for volume output. 2K resolution, moderate evaluation, optimized for generating many assets efficiently.
+
+generation:
+  resolution: 2K
+
+refinement:
+  max_iterations: 3
+  quality_threshold: 0.75
+  regression_cutoff: true
+
+consistency:
+  reference_images: 4
+  style_weight: 0.6
+
+variants:
+  variation_strength: 0.35
+
+output:
+  formats:
+    - png
+    - jpg
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: false

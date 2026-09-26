@@ -1,0 +1,109 @@
+# Type Safety Sharp Edges
+# Patterns for unsafe type usage in TypeScript and Python
+
+edges:
+  # === TypeScript ===
+
+  - id: ts_any_type
+    severity: warning
+    category: correctness
+    pattern: "TypeScript 'any' type usage disables type checking"
+    detection:
+      - type: regex
+        value: ':\s*any\b|<any>|as\s+any\b'
+        files: ["*.ts", "*.tsx"]
+    why: "Using 'any' bypasses TypeScript's type system and defeats the purpose of typing. It masks real type errors that can surface at runtime."
+    fix: "Replace 'any' with a concrete type, 'unknown' (safer), or a generic. If the type is truly dynamic, use 'unknown' and add a type guard."
+    examples:
+      bad: |
+        function process(data: any): any {
+          return data.value;
+        }
+      good: |
+        function process(data: unknown): string {
+          if (typeof data === 'object' && data !== null && 'value' in data) {
+            return String((data as { value: unknown }).value);
+          }
+          throw new Error('Invalid data shape');
+        }
+    tags: ["typescript", "type-safety"]
+    languages: ["typescript"]
+
+  - id: ts_type_assertion_abuse
+    severity: warning
+    category: correctness
+    pattern: "TypeScript 'as' type assertion used without runtime validation"
+    detection:
+      - type: regex
+        value: '\)\s+as\s+(?!const\b)[A-Z][A-Za-z]+|as\s+(?!const\b)[A-Z][A-Za-z]+\s*[;,)\]]'
+        files: ["*.ts", "*.tsx"]
+    why: "'as' assertions tell the compiler to trust you without any runtime check. If the actual value doesn't match, you get silent type mismatches that blow up later."
+    fix: "Use a type guard function or Zod/io-ts schema to validate shape at runtime before asserting. Reserve 'as const' for literal narrowing (safe)."
+    examples:
+      bad: |
+        const config = JSON.parse(raw) as AppConfig;
+        // config.apiUrl might be undefined — TypeScript won't warn you
+      good: |
+        const config = AppConfigSchema.parse(JSON.parse(raw));
+    tags: ["typescript", "type-safety", "runtime-safety"]
+    languages: ["typescript"]
+
+  - id: ts_ignore_without_explanation
+    severity: warning
+    category: maintainability
+    pattern: "TypeScript @ts-ignore or @ts-expect-error without explanation comment"
+    detection:
+      - type: regex
+        value: '@ts-ignore(?!\s*--\s*\S)|@ts-expect-error(?!\s*--\s*\S)'
+        files: ["*.ts", "*.tsx"]
+    why: "Suppressing TypeScript errors without a note leaves future maintainers with no context on why the suppression was needed or when it can be removed."
+    fix: "Add a comment after the directive: // @ts-expect-error -- TODO: fix after upgrading lib X"
+    examples:
+      bad: |
+        // @ts-ignore
+        legacyApi.doThing(arg);
+      good: |
+        // @ts-expect-error -- legacyApi types are wrong in v2, fixed in v3 (TODO: remove after upgrade)
+        legacyApi.doThing(arg);
+    tags: ["typescript", "suppressions"]
+    languages: ["typescript"]
+
+  # === Python ===
+
+  - id: py_missing_return_annotation
+    severity: info
+    category: maintainability
+    pattern: "Python public function missing return type annotation"
+    detection:
+      - type: regex
+        value: '^def [a-z][A-Za-z0-9_]*\s*\([^)]*\)\s*:'
+        files: ["*.py"]
+    why: "Unannotated return types make it harder for mypy, IDEs, and maintainers to understand function contracts. Public functions are the API boundary."
+    fix: "Add a return type annotation: def foo(x: int) -> str:"
+    examples:
+      bad: |
+        def get_user(user_id: int):
+            return db.query(User).get(user_id)
+      good: |
+        def get_user(user_id: int) -> User | None:
+            return db.query(User).get(user_id)
+    tags: ["python", "type-annotations", "mypy"]
+    languages: ["python"]
+
+  - id: py_type_ignore_no_code
+    severity: warning
+    category: maintainability
+    pattern: "Python '# type: ignore' without specific error code"
+    detection:
+      - type: regex
+        value: '#\s*type:\s*ignore\s*$|#\s*type:\s*ignore\s*[^[]'
+        files: ["*.py"]
+    why: "A bare '# type: ignore' silences all mypy errors on that line. If the underlying issue is later fixed, the suppression stays silently masking new problems."
+    fix: "Use the specific error code: # type: ignore[assignment] or # type: ignore[arg-type]"
+    examples:
+      bad: |
+        result = legacy_fn(x)  # type: ignore
+      good: |
+        result = legacy_fn(x)  # type: ignore[return-value]  -- legacy_fn returns int but typed as str
+    tags: ["python", "mypy", "suppressions"]
+    languages: ["python"]

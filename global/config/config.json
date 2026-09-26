@@ -1,0 +1,49 @@
+{
+  "system": {
+    "name": "Huxley",
+    "version": "1.0.0",
+    "environment": "production"
+  },
+  "features": {
+    "DISTRIBUTED_ROUTING": false,
+    "RESULT_CACHE": true,
+    "STREAMING_PROCESSING": true,
+    "STRICT_SCHEMA": true,
+    "JWT_AUTH": true,
+    "LAZY_IMPORTS": true,
+    "CIRCUIT_BREAKERS": true,
+    "HEALTH_MONITORING": true
+  },
+  "performance": {
+    "CACHE_TTL_SEC": 300,
+    "MAX_CONCURRENT_WORKFLOWS": 5,
+    "MAX_CONCURRENT_STEPS": 10,
+    "LAZY_IMPORT_WARMUP": true
+  },
+  "monitoring": {
+    "STRUCTURED_LOGGING": true,
+    "METRICS_COLLECTION": true,
+    "ALERT_NOTIFICATIONS": true,
+    "RETENTION_HOURS": 168
+  },
+  "security": {
+    "USE_KEYCHAIN": true,
+    "VALIDATE_INPUTS": true,
+    "SECURE_EXECUTION": true,
+    "AUDIT_LOGGING": true
+  },
+  "capsules": {
+    "ENFORCE_BOUNDARIES": true,
+    "IMMUTABLE_AFTER_DEPLOY": true,
+    "PER_CAPSULE_STATE": true,
+    "ISOLATED_EXECUTION": true
+  },
+  "testing": {
+    "NETWORK_MODE": "mock",
+    "FAST_UNIT_TESTS": true,
+    "REGRESSION_TESTS": true
+  },
+  "apple": {
+    "DEVELOPER_TEAM_ID": "${APPLE_DEVELOPER_TEAM_ID}"
+  }
+}

@@ -1,0 +1,49 @@
+name: Social Content
+media_type: image
+model: google/gemini-2.5-flash-image
+auth: openrouter
+auth_provider: openrouter
+profile: fast-draft
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "1:1"       # Instagram feed
+    - "9:16"      # Stories, Reels, TikTok
+    - "16:9"      # Twitter, LinkedIn
+    - "4:5"       # Instagram portrait
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.70
+  regression_cutoff: true
+  evaluate_criteria:
+    - visual_impact
+    - text_readability
+    - brand_alignment
+    - mobile_clarity
+  hard_checks:
+    - file_exists
+    - file_not_empty
+
+consistency:
+  reference_images: 3
+  style_weight: 0.5
+  character_lock: false
+
+variants:
+  count: 8
+  variation_strength: 0.4
+
+output:
+  directory: "generated-media/{capsule}/{date}/social/"
+  naming: "{workflow}-{sequence}-{resolution}"
+  formats:
+    - png
+    - jpg
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: false

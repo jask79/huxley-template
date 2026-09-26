@@ -1,0 +1,26 @@
+{
+  "feature": "Test Feature Loop",
+  "branch": "test/feature-loop",
+  "maxIterations": 2,
+  "governance": {
+    "requireValidation": false,
+    "notifyOnComplete": false,
+    "costAlertThreshold": 1
+  },
+  "tasks": [
+    {
+      "id": "TEST-001",
+      "title": "Create simple test file",
+      "description": "Create a file at {{CATALYST_ROOT}}/tmp/feature-loop-test.txt with content 'Feature Loop Test'",
+      "specialist": "Backend Dev",
+      "priority": 1,
+      "acceptanceCriteria": [
+        "File exists at specified path",
+        "File contains correct content"
+      ],
+      "passes": false,
+      "completedAt": null,
+      "learnings": []
+    }
+  ]
+}

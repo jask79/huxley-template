@@ -1,0 +1,210 @@
+# Custom taxonomy for the File Organizer — edit this to match YOUR projects.
+# Each category has:
+#   label:            Display name (used in Finder tags)
+#   color:            Finder color (red=1, green=2, yellow=3, blue=4, orange=5, purple=6, gray=7, none=0)
+#   path_patterns:    Substrings matched against the full file path (case-insensitive)
+#   content_keywords: Phrases searched inside file text/PDF content (case-insensitive)
+#   description:      Helps the AI fallback understand this category
+#   priority:         Higher = checked first (resolves ties)
+#
+# The two "Project" entries are placeholders. Rename them (key + label) to your real
+# projects/brands and add one block per project. Keep the labels in sync with the
+# CATEGORIES fallback list in categorizer.py.
+
+categories:
+
+  # ── Business / Project buckets (placeholders — rename me) ───────────
+
+  project-a:
+    label: "Project A"
+    color: 4  # blue
+    priority: 90
+    path_patterns:
+      - "project-a"
+      - "project_a"
+      - "projecta"
+    content_keywords:
+      - "project a"
+    description: "Project A — replace with your first business/project: brand assets, docs, exports"
+
+  project-b:
+    label: "Project B"
+    color: 5  # orange
+    priority: 90
+    path_patterns:
+      - "project-b"
+      - "project_b"
+      - "projectb"
+    content_keywords:
+      - "project b"
+    description: "Project B — replace with your second business/project"
+
+  # key stays "catalyst" (the framework's internal name, used in paths like
+  # catalyst-os); the display label is the product name, and both spellings
+  # are matched on purpose.
+  catalyst:
+    label: "Huxley"
+    color: 6  # purple
+    priority: 70
+    path_patterns:
+      - "catalyst"
+      - "huxley"
+    content_keywords:
+      - "huxley"
+      - "catalyst system"
+      - "capsule"
+      - "claude code"
+    description: "Huxley — personal dev system, agents, tools, configs"
+
+  # ── Personal ───────────────────────────────────────────────
+
+  health-fitness:
+    label: "Health & Fitness"
+    color: 1  # red
+    priority: 80
+    path_patterns:
+      - "health"
+      - "fitness"
+      - "workout"
+      - "medical"
+    content_keywords:
+      - "lab result"
+      - "blood work"
+      - "bloodwork"
+      - "body composition"
+      - "prescription"
+      - "pharmacy"
+      - "workout"
+      - "exercise"
+      - "meditation"
+      - "body fat"
+      - "lean mass"
+    description: "Health & Fitness — medical records, lab results, workouts, supplements"
+
+  finance:
+    label: "Finance"
+    color: 1  # red
+    priority: 75
+    path_patterns:
+      - "finance"
+      - "invoice"
+      - "receipt"
+      - "tax"
+      - "bank"
+      - "budget"
+    content_keywords:
+      - "invoice"
+      - "receipt"
+      - "tax return"
+      - "w-2"
+      - "1099"
+      - "bank statement"
+      - "balance sheet"
+      - "profit and loss"
+      - "ein"
+      - "llc"
+      - "accounts payable"
+      - "accounts receivable"
+      - "payment"
+      - "stripe"
+      - "paypal"
+    description: "Finance — invoices, receipts, tax docs, bank statements, budgets, accounting"
+
+  personal:
+    label: "Personal"
+    color: 7  # gray
+    priority: 40
+    path_patterns:
+      - "personal"
+    content_keywords:
+      - "personal"
+      - "family"
+      - "vacation"
+      - "birthday"
+      - "wedding"
+      - "anniversary"
+    description: "Personal — family matters, personal documents, life admin"
+
+  # ── Work / General ─────────────────────────────────────────
+
+  design:
+    label: "Design"
+    color: 3  # yellow
+    priority: 30
+    path_patterns:
+      - "mockup"
+      - "wireframe"
+      - "figma"
+    content_keywords:
+      - "mockup"
+      - "wireframe"
+      - "design system"
+      - "style guide"
+      - "brand guide"
+      - "color palette"
+      - "typography"
+    description: "Design — mockups, logos, UI work not tied to a specific project"
+
+  development:
+    label: "Development"
+    color: 2  # green
+    priority: 25
+    path_patterns:
+      - "code"
+      - "github"
+      - "node_modules"
+    content_keywords:
+      - "function"
+      - "import"
+      - "const"
+      - "class"
+      - "def "
+      - "return"
+      - "api"
+      - "endpoint"
+      - "database"
+      - "migration"
+    description: "Development — source code, configs, scripts, technical docs"
+
+  reference:
+    label: "Reference"
+    color: 4  # blue
+    priority: 20
+    path_patterns:
+      - "reference"
+      - "tutorial"
+      - "cheat"
+    content_keywords:
+      - "tutorial"
+      - "how to"
+      - "guide"
+      - "cheat sheet"
+      - "reference"
+      - "documentation"
+    description: "Reference — articles, tutorials, cheat sheets, research"
+
+  media-entertainment:
+    label: "Media & Entertainment"
+    color: 5  # orange
+    priority: 15
+    path_patterns:
+      - "movie"
+      - "music"
+      - "podcast"
+      - "audiobook"
+    content_keywords:
+      - "movie"
+      - "episode"
+      - "season"
+      - "album"
+      - "soundtrack"
+      - "playlist"
+    description: "Media & Entertainment — movies, music, podcasts, personal downloads"
+
+  unsorted:
+    label: "Unsorted"
+    color: 0  # none
+    priority: 0
+    path_patterns: []
+    content_keywords: []
+    description: "Could not confidently categorize — needs manual review"

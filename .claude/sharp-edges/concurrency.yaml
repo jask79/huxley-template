@@ -1,0 +1,514 @@
+# Concurrency & Async Sharp Edges
+# Race conditions, deadlocks, and async misuse patterns across Python, JS/TS, Go, Swift
+
+edges:
+  # === CRITICAL: Python Async ===
+
+  - id: async_def_no_await
+    severity: warning
+    category: concurrency
+    pattern: "async def function with no await inside (dead async)"
+    detection:
+      - type: regex
+        value: 'async def \w+\([^)]*\)(?:[^#\n]*\n)(?:(?!.*\bawait\b).*\n)*?(?=\s*(?:async def|def|class|\Z))'
+        files: ["*.py"]
+      - type: semantic
+        description: "async function body that never uses await — gains no concurrency benefit and misleads callers"
+    why: "A coroutine with no await runs entirely synchronously on the event loop. It blocks without yielding, defeats the purpose of async, and signals to callers that it can be awaited concurrently when it cannot."
+    fix: "Either add await to the I/O operation inside, or remove the async keyword and make it a regular function."
+    examples:
+      bad: |
+        async def get_user(user_id: int) -> User:
+            return db_session.query(User).filter_by(id=user_id).first()
+      good: |
+        async def get_user(user_id: int) -> User:
+            return await db.fetch_one("SELECT * FROM users WHERE id = $1", user_id)
+    tags: ["python", "asyncio", "correctness"]
+    languages: ["python"]
+
+  - id: asyncio_sleep_zero_yield
+    severity: info
+    category: concurrency
+    pattern: "asyncio.sleep(0) used as a yield point"
+    detection:
+      - type: regex
+        value: 'await\s+asyncio\.sleep\s*\(\s*0\s*\)'
+        files: ["*.py"]
+    why: "asyncio.sleep(0) is a fragile pattern for yielding control. It depends on event loop internals, signals no intent to readers, and breaks under uvloop or alternative schedulers."
+    fix: "Use asyncio.sleep(0) only when you genuinely need a single-tick yield. Document why. If you need cooperative multitasking in a tight loop, prefer asyncio.gather or task scheduling."
+    examples:
+      bad: |
+        for item in large_list:
+            process(item)
+            await asyncio.sleep(0)  # yield to event loop
+      good: |
+        async def process_chunk(chunk):
+            for item in chunk:
+                process(item)
+
+        await asyncio.gather(*[process_chunk(c) for c in chunks(large_list, 100)])
+    tags: ["python", "asyncio", "performance"]
+    languages: ["python"]
+
+  - id: shared_mutable_state_no_lock
+    severity: critical
+    category: concurrency
+    pattern: "Shared mutable state accessed from multiple coroutines without asyncio.Lock"
+    detection:
+      - type: semantic
+        description: "Module-level or class-level mutable dict/list/set mutated inside async def without acquiring a lock"
+    why: "Even though asyncio is single-threaded, coroutines can interleave at every await point. A read-modify-write on shared state across two await boundaries is a race condition."
+    fix: "Protect shared mutable state with asyncio.Lock(). Prefer passing state explicitly rather than using globals."
+    examples:
+      bad: |
+        cache = {}
+
+        async def get_or_fetch(key):
+            if key not in cache:
+                result = await fetch(key)
+                cache[key] = result  # another coroutine may have fetched between check and write
+            return cache[key]
+      good: |
+        cache = {}
+        _lock = asyncio.Lock()
+
+        async def get_or_fetch(key):
+            async with _lock:
+                if key not in cache:
+                    cache[key] = await fetch(key)
+                return cache[key]
+    tags: ["python", "asyncio", "race-condition"]
+    languages: ["python"]
+
+  - id: loop_run_until_complete_in_async
+    severity: critical
+    category: concurrency
+    pattern: "loop.run_until_complete() called inside an async context (deadlock)"
+    detection:
+      - type: regex
+        value: '(?:loop|asyncio\.get_event_loop\(\))\.run_until_complete\s*\('
+        files: ["*.py"]
+    why: "run_until_complete blocks the calling thread until the coroutine completes. Called from inside a running event loop it deadlocks immediately because the loop cannot run the new coroutine while it is already running."
+    fix: "Inside async code, use await directly. If you must call from sync code, use asyncio.run() for a fresh loop or nest via nest_asyncio only in notebooks."
+    examples:
+      bad: |
+        async def handler():
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(fetch_data())  # deadlock
+      good: |
+        async def handler():
+            result = await fetch_data()
+    tags: ["python", "asyncio", "deadlock"]
+    languages: ["python"]
+
+  - id: asyncio_gather_no_error_handling
+    severity: warning
+    category: concurrency
+    pattern: "asyncio.gather() without return_exceptions or try/except (one failure kills all)"
+    detection:
+      - type: regex
+        value: 'await\s+asyncio\.gather\s*\([^)]+\)(?!\s*#.*return_exceptions)'
+        files: ["*.py"]
+      - type: semantic
+        description: "asyncio.gather call not wrapped in try/except and missing return_exceptions=True"
+    why: "By default asyncio.gather cancels all other tasks when any one raises. If you want partial results or want to handle failures per-task, the default behavior silently discards completed work."
+    fix: "Use return_exceptions=True to collect results and exceptions together, then inspect each. Or wrap in try/except and cancel remaining tasks explicitly."
+    examples:
+      bad: |
+        results = await asyncio.gather(fetch_a(), fetch_b(), fetch_c())
+      good: |
+        results = await asyncio.gather(fetch_a(), fetch_b(), fetch_c(), return_exceptions=True)
+        for r in results:
+            if isinstance(r, Exception):
+                logger.error("Task failed: %s", r)
+    tags: ["python", "asyncio", "error-handling"]
+    languages: ["python"]
+
+  # === CRITICAL: JavaScript / TypeScript Async ===
+
+  - id: promise_constructor_async_executor
+    severity: critical
+    category: concurrency
+    pattern: "Promise constructor with async executor function (swallowed rejections)"
+    detection:
+      - type: regex
+        value: 'new\s+Promise\s*\(\s*async\s*(?:\([^)]*\)|\w+)\s*=>'
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "An async executor returns a Promise that the Promise constructor ignores. Any rejection thrown after the first await inside the executor is silently swallowed — no error, no warning, just a missing result."
+    fix: "Never use async in a Promise constructor. Refactor to use async/await directly or chain .then()."
+    examples:
+      bad: |
+        return new Promise(async (resolve, reject) => {
+          const data = await fetchData()
+          resolve(transform(data))
+        })
+      good: |
+        const data = await fetchData()
+        return transform(data)
+    tags: ["javascript", "typescript", "promise", "silent-failure"]
+    languages: ["javascript", "typescript"]
+
+  - id: promise_missing_catch
+    severity: warning
+    category: concurrency
+    pattern: "Promise chain without .catch() handler"
+    detection:
+      - type: regex
+        value: '\.\s*then\s*\([^)]+\)(?!\s*\.\s*catch)'
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "Unhandled promise rejections crash Node.js processes in newer versions and produce UnhandledPromiseRejection warnings. Missing .catch() means errors are silently lost in older runtimes."
+    fix: "Always chain .catch() on promise chains. In async/await code prefer try/catch."
+    examples:
+      bad: |
+        fetchUser(id).then(user => renderProfile(user))
+      good: |
+        fetchUser(id)
+          .then(user => renderProfile(user))
+          .catch(err => logger.error('fetchUser failed', err))
+    tags: ["javascript", "typescript", "promise", "error-handling"]
+    languages: ["javascript", "typescript"]
+
+  - id: await_inside_foreach
+    severity: critical
+    category: concurrency
+    pattern: "await inside Array.forEach (forEach does not await async callbacks)"
+    detection:
+      - type: regex
+        value: '\.forEach\s*\(\s*async\s*(?:\([^)]*\)|\w+)\s*=>'
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "Array.forEach is not async-aware. It fires each callback but does not await the returned promise. All async operations launch in parallel and the forEach returns before any of them complete — the caller proceeds with no results."
+    fix: "Use for...of with await for sequential execution, or Promise.all(items.map(async ...)) for parallel execution."
+    examples:
+      bad: |
+        items.forEach(async (item) => {
+          await processItem(item)
+        })
+        // execution continues here before any item is processed
+      good: |
+        // Sequential:
+        for (const item of items) {
+          await processItem(item)
+        }
+        // Parallel:
+        await Promise.all(items.map(item => processItem(item)))
+    tags: ["javascript", "typescript", "async", "correctness"]
+    languages: ["javascript", "typescript"]
+
+  - id: check_then_act_race
+    severity: critical
+    category: concurrency
+    pattern: "Check-then-act pattern without atomicity (TOCTOU in async code)"
+    detection:
+      - type: semantic
+        description: "Async function that checks a condition, awaits something, then acts on the now-stale condition"
+    why: "Between the check and the act, another coroutine or request may have changed the state. The check result is stale by the time the action executes."
+    fix: "Use atomic database operations (upsert, compare-and-swap, SELECT FOR UPDATE), Redis locks, or pessimistic locking to make check-and-act atomic."
+    examples:
+      bad: |
+        if (await db.count('orders', { userId }) < 3) {
+          await sleep(10) // simulates any await
+          await db.insert('orders', newOrder) // limit may be exceeded by now
+        }
+      good: |
+        await db.transaction(async (trx) => {
+          const count = await trx.count('orders', { userId }, { forUpdate: true })
+          if (count < 3) await trx.insert('orders', newOrder)
+        })
+    tags: ["javascript", "typescript", "race-condition", "toctou"]
+    languages: ["javascript", "typescript"]
+
+  - id: setinterval_no_cleanup_useeffect
+    severity: warning
+    category: concurrency
+    pattern: "setTimeout/setInterval without cleanup in React useEffect"
+    detection:
+      - type: regex
+        value: 'useEffect\s*\([^{]*\{[^}]*set(?:Timeout|Interval)\s*\([^}]*(?!\s*return\s*\(\s*\)\s*=>)'
+        files: ["*.tsx", "*.jsx", "*.ts", "*.js"]
+    why: "Without a cleanup function, timers continue firing after the component unmounts. This causes setState calls on unmounted components, memory leaks, and duplicate side effects when the component remounts."
+    fix: "Return a cleanup function from useEffect that calls clearTimeout/clearInterval."
+    examples:
+      bad: |
+        useEffect(() => {
+          const id = setInterval(fetchData, 5000)
+        }, [])
+      good: |
+        useEffect(() => {
+          const id = setInterval(fetchData, 5000)
+          return () => clearInterval(id)
+        }, [])
+    tags: ["react", "javascript", "typescript", "memory-leak"]
+    languages: ["javascript", "typescript"]
+
+  # === CRITICAL: Go ===
+
+  - id: goroutine_leak_no_context
+    severity: critical
+    category: concurrency
+    pattern: "Goroutine launched without cancellation context (goroutine leak)"
+    detection:
+      - type: regex
+        value: 'go\s+func\s*\([^)]*\)\s*\{'
+        files: ["*.go"]
+      - type: semantic
+        description: "Goroutine that ignores context.Context and has no channel-based cancellation path"
+    why: "A goroutine with no cancellation path runs until the process exits. In long-running servers this leaks goroutines on every request, eventually exhausting memory."
+    fix: "Pass a context.Context into every goroutine. Select on ctx.Done() to exit cleanly."
+    examples:
+      bad: |
+        go func() {
+            for {
+                process(queue.Dequeue())
+            }
+        }()
+      good: |
+        go func(ctx context.Context) {
+            for {
+                select {
+                case <-ctx.Done():
+                    return
+                default:
+                    process(queue.Dequeue())
+                }
+            }
+        }(ctx)
+    tags: ["go", "goroutine", "memory-leak"]
+    languages: ["go"]
+
+  - id: unbuffered_channel_no_reader
+    severity: critical
+    category: concurrency
+    pattern: "Unbuffered channel send with no guaranteed reader (deadlock)"
+    detection:
+      - type: semantic
+        description: "make(chan T) without buffer used for sends where the receiver may not exist or may not be ready"
+    why: "An unbuffered channel send blocks until a receiver is ready. If the receiver goroutine exits first, errors, or was never launched, the sender blocks forever — deadlock."
+    fix: "Use a buffered channel sized for your workload, or ensure the receiver is launched before any send. Use select with a default case for non-blocking sends."
+    examples:
+      bad: |
+        results := make(chan Result)
+        go worker(results)
+        r := <-results // blocks forever if worker panics before sending
+      good: |
+        results := make(chan Result, 1)
+        go worker(results)
+        select {
+        case r := <-results:
+            use(r)
+        case <-time.After(5 * time.Second):
+            log.Fatal("worker timeout")
+        }
+    tags: ["go", "channel", "deadlock"]
+    languages: ["go"]
+
+  - id: waitgroup_add_after_launch
+    severity: critical
+    category: concurrency
+    pattern: "sync.WaitGroup.Add() called after goroutine launch (race condition)"
+    detection:
+      - type: regex
+        value: 'go\s+\w+[^\n]*\n[^\n]*wg\.Add\s*\('
+        files: ["*.go"]
+    why: "If the goroutine runs and calls wg.Done() before wg.Add(1) executes on the calling goroutine, WaitGroup's counter goes negative, causing a panic. The window is tiny but real under load."
+    fix: "Always call wg.Add(n) before launching the goroutine(s)."
+    examples:
+      bad: |
+        go processItem(item)
+        wg.Add(1)  // too late — goroutine may already be done
+      good: |
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            processItem(item)
+        }()
+    tags: ["go", "sync", "race-condition"]
+    languages: ["go"]
+
+  - id: channel_close_multiple_goroutines
+    severity: critical
+    category: concurrency
+    pattern: "Channel closed from multiple goroutines (panic on double-close)"
+    detection:
+      - type: semantic
+        description: "close(ch) called in multiple goroutines or in a goroutine without exclusive ownership of the channel"
+    why: "Closing an already-closed channel panics in Go. When multiple goroutines can reach a close() call, a race condition makes a double-close likely under concurrent load."
+    fix: "Designate exactly one goroutine as the channel owner responsible for closing. Use sync.Once if multiple goroutines compete for the close, or use a done channel pattern."
+    examples:
+      bad: |
+        // Both worker goroutines may close ch
+        go func() { close(ch) }()
+        go func() { close(ch) }()
+      good: |
+        var once sync.Once
+        closeOnce := func() { once.Do(func() { close(ch) }) }
+        go func() { closeOnce() }()
+        go func() { closeOnce() }()
+    tags: ["go", "channel", "panic"]
+    languages: ["go"]
+
+  # === CRITICAL: Swift ===
+
+  - id: main_actor_missing_ui_update
+    severity: critical
+    category: concurrency
+    pattern: "@MainActor missing on async function that updates UI"
+    detection:
+      - type: regex
+        value: 'func\s+\w+[^{]*async[^{]*\{[^}]*(?:\.text\s*=|\.image\s*=|\.isHidden\s*=|DispatchQueue\.main)'
+        files: ["*.swift"]
+    why: "UI updates off the main actor trigger runtime warnings in Xcode 15+ and can cause visual glitches, crashes, or undefined rendering behavior under Swift's strict concurrency checks."
+    fix: "Annotate UI-updating async functions with @MainActor, or wrap UI mutations in await MainActor.run { }."
+    examples:
+      bad: |
+        func loadAndDisplay() async {
+            let data = await fetchData()
+            label.text = data.title  // not on main actor
+        }
+      good: |
+        @MainActor
+        func loadAndDisplay() async {
+            let data = await fetchData()
+            label.text = data.title
+        }
+    tags: ["swift", "mainactor", "ui", "concurrency"]
+    languages: ["swift"]
+
+  - id: non_sendable_actor_boundary
+    severity: critical
+    category: concurrency
+    pattern: "Non-Sendable type crossing actor boundary (data race)"
+    detection:
+      - type: semantic
+        description: "Class or struct without Sendable conformance passed to or returned from an actor method or Task"
+    why: "Swift's actor isolation model prevents data races only for Sendable types. Passing a non-Sendable reference type across actor boundaries allows concurrent mutation — the exact data race actors are designed to prevent."
+    fix: "Conform shared types to Sendable (or @unchecked Sendable with manual locking). Prefer value types (struct). Use actors to encapsulate mutable state instead of sharing it."
+    examples:
+      bad: |
+        class UserCache {  // not Sendable
+            var entries: [String: User] = [:]
+        }
+        actor DataManager {
+            func store(cache: UserCache) { ... }  // crossing boundary
+        }
+      good: |
+        struct UserCache: Sendable {
+            var entries: [String: User] = [:]
+        }
+        actor DataManager {
+            func store(cache: UserCache) { ... }
+        }
+    tags: ["swift", "sendable", "actor", "data-race"]
+    languages: ["swift"]
+
+  - id: task_no_cancellation_handling
+    severity: warning
+    category: concurrency
+    pattern: "Task {} launched without cancellation handling"
+    detection:
+      - type: regex
+        value: 'Task\s*\{[^}]*\}'
+        files: ["*.swift"]
+      - type: semantic
+        description: "Task closure that does not check Task.isCancelled or use try Task.checkCancellation()"
+    why: "Unstructured Tasks detached from a parent context run until completion even when the initiating view or actor is deallocated. This wastes resources and can produce side effects (network calls, DB writes) after the originating context is gone."
+    fix: "Check Task.isCancelled at loop boundaries. Store the Task handle and call .cancel() in onDisappear or deinit."
+    examples:
+      bad: |
+        Task {
+            for item in items {
+                await processItem(item)
+            }
+        }
+      good: |
+        let task = Task {
+            for item in items {
+                try Task.checkCancellation()
+                await processItem(item)
+            }
+        }
+        // In onDisappear:
+        task.cancel()
+    tags: ["swift", "task", "cancellation", "memory-leak"]
+    languages: ["swift"]
+
+  - id: dispatch_main_sync_on_main
+    severity: critical
+    category: concurrency
+    pattern: "DispatchQueue.main.sync called from the main thread (deadlock)"
+    detection:
+      - type: regex
+        value: 'DispatchQueue\.main\.sync\s*\{'
+        files: ["*.swift"]
+    why: "DispatchQueue.main.sync submits a block and blocks the current thread until it completes. If called from the main thread, the block cannot execute because the main thread is blocked waiting for itself — instant deadlock."
+    fix: "Use DispatchQueue.main.async instead, or restructure with async/await and @MainActor."
+    examples:
+      bad: |
+        // Called from main thread:
+        DispatchQueue.main.sync {
+            updateUI()
+        }
+      good: |
+        DispatchQueue.main.async {
+            updateUI()
+        }
+        // Or with Swift Concurrency:
+        await MainActor.run { updateUI() }
+    tags: ["swift", "dispatchqueue", "deadlock", "main-thread"]
+    languages: ["swift"]
+
+  # === CRITICAL: General ===
+
+  - id: toctou_file_operations
+    severity: critical
+    category: concurrency
+    pattern: "TOCTOU: check file existence/permission then act without atomicity"
+    detection:
+      - type: regex
+        value: '(?:os\.path\.exists|os\.access|path\.exists\(\)|access\()\s*[^)]+\)[^\n]*\n(?:[^\n]*\n){0,3}[^\n]*(?:open|write|unlink|rename|mkdir|shutil\.)'
+        files: ["*.py", "*.ts", "*.js", "*.go"]
+    why: "Between checking a file's state and acting on it, another process can change the file. This enables race conditions in file processing, security bypasses in privilege checks, and data corruption in concurrent writers."
+    fix: "Use atomic file operations: open with O_CREAT|O_EXCL for exclusive creation, use file locking (fcntl.flock), or rely on database transactions instead of filesystem state."
+    examples:
+      bad: |
+        if not os.path.exists(lock_file):
+            # another process may create lock_file here
+            open(lock_file, 'w').write(str(os.getpid()))
+      good: |
+        import fcntl
+        fd = open(lock_file, 'w')
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fd.write(str(os.getpid()))
+        except BlockingIOError:
+            raise RuntimeError("Already locked")
+    tags: ["toctou", "file-system", "race-condition"]
+    languages: ["python", "javascript", "typescript", "go"]
+
+  - id: shared_mutable_global_no_sync
+    severity: critical
+    category: concurrency
+    pattern: "Shared mutable global state without synchronization"
+    detection:
+      - type: semantic
+        description: "Module-level or class-level mutable variable (dict, list, counter) mutated from multiple threads, goroutines, or concurrent tasks without a lock or atomic operation"
+    why: "Unsynchronized shared mutable state is the root cause of the majority of concurrency bugs. Symptoms range from subtle data corruption to crashes to security vulnerabilities depending on what the state controls."
+    fix: "Eliminate shared mutable state where possible (prefer message passing). When sharing is unavoidable, protect with the appropriate primitive: threading.Lock (Python threads), asyncio.Lock (Python async), sync.Mutex (Go), NSLock/actor (Swift)."
+    examples:
+      bad: |
+        # Python — mutated from ThreadPoolExecutor workers
+        request_count = 0
+
+        def handle_request():
+            global request_count
+            request_count += 1  # not atomic
+      good: |
+        import threading
+        _lock = threading.Lock()
+        request_count = 0
+
+        def handle_request():
+            global request_count
+            with _lock:
+                request_count += 1
+    tags: ["global-state", "thread-safety", "race-condition"]
+    languages: ["python", "javascript", "typescript", "go", "swift"]

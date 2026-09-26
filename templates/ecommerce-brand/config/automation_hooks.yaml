@@ -1,0 +1,378 @@
+automation_config:
+  brand_id: ""
+  version: "1.0"
+  last_updated: ""
+  global_enabled: true
+
+state_transition_hooks:
+  entering_ideation:
+    enabled: true
+    actions:
+      - action: "create_brand_folder_structure"
+        priority: 1
+        config:
+          template: "ecommerce-brand"
+          
+      - action: "initialize_brand_metrics"
+        priority: 2
+        config:
+          baseline_values: true
+          
+      - action: "setup_competitive_monitoring"
+        priority: 3
+        config:
+          automated: false
+          manual_setup_required: true
+  
+  entering_pre_revenue:
+    enabled: true
+    actions:
+      - action: "setup_asset_monitoring"
+        priority: 1
+        config:
+          scan_frequency: "daily"
+          auto_optimize: true
+          
+      - action: "initialize_metrics_tracking"
+        priority: 2
+        config:
+          metrics_suite: "brand_building"
+          
+      - action: "create_content_calendar"
+        priority: 3
+        config:
+          template: "pre_revenue_brand"
+          duration_weeks: 12
+          
+      - action: "setup_platform_readiness_tracking"
+        priority: 4
+        config:
+          platforms: ["amazon", "shopify"]
+  
+  entering_launching:
+    enabled: true
+    actions:
+      - action: "enable_listing_sync"
+        priority: 1
+        config:
+          platforms: ["amazon"]
+          sync_frequency: "hourly"
+          
+      - action: "activate_basic_campaigns"
+        priority: 2
+        config:
+          campaign_types: ["brand_awareness"]
+          budget_daily: 25
+          
+      - action: "start_performance_tracking"
+        priority: 3
+        config:
+          metrics_suite: "launch_phase"
+          alerting: true
+          
+      - action: "setup_review_monitoring"
+        priority: 4
+        config:
+          platforms: ["amazon", "shopify"]
+          alert_threshold: 4.0
+  
+  entering_active:
+    enabled: true
+    actions:
+      - action: "enable_inventory_sync"
+        priority: 1
+        config:
+          platforms: ["amazon", "shopify"]
+          sync_frequency: "hourly"
+          
+      - action: "activate_full_automation"
+        priority: 2
+        config:
+          pricing_automation: true
+          inventory_automation: true
+          campaign_optimization: true
+          
+      - action: "setup_financial_tracking"
+        priority: 3
+        config:
+          metrics_suite: "full_operations"
+          profit_tracking: true
+          
+      - action: "enable_cross_platform_sync"
+        priority: 4
+        config:
+          bidirectional: true
+          conflict_resolution: "amazon_primary"
+  
+  entering_scaled:
+    enabled: true
+    actions:
+      - action: "enable_ai_optimization"
+        priority: 1
+        config:
+          pricing_ai: true
+          campaign_ai: true
+          inventory_ai: true
+          
+      - action: "activate_predictive_analytics"
+        priority: 2
+        config:
+          demand_forecasting: true
+          trend_analysis: true
+          
+      - action: "setup_cross_brand_learning"
+        priority: 3
+        config:
+          pattern_sharing: true
+          insight_generation: true
+
+operational_triggers:
+  competitor_monitoring:
+    enabled: true
+    frequency: "daily"
+    actions:
+      price_change:
+        conditions:
+          - competitor_price_decrease: ">5%"
+          - direct_competitor: true
+        action_by_state:
+          ideation: "log_only"
+          pre_revenue: "notify_only"
+          launching: "analyze_and_recommend"
+          active: "auto_adjust_within_bounds"
+          scaled: "ai_optimize_response"
+        config:
+          max_auto_adjustment: "10%"
+          notification_channels: ["email", "slack"]
+      
+      new_competitor:
+        conditions:
+          - new_brand_detected: true
+          - category_overlap: ">70%"
+        action: "full_competitive_analysis"
+        config:
+          analysis_depth: "comprehensive"
+          
+      ranking_change:
+        conditions:
+          - position_drop: ">5_positions"
+          - target_keyword: true
+        action: "seo_optimization_review"
+        config:
+          auto_keyword_research: true
+
+  inventory_management:
+    enabled: false # Enabled in active/scaled states
+    frequency: "hourly"
+    actions:
+      low_stock:
+        conditions:
+          - stock_level: "<reorder_point"
+          - active_product: true
+        action_by_state:
+          active: "create_reorder_capsule"
+          scaled: "auto_reorder_if_trusted_supplier"
+        config:
+          lead_time_buffer: 7 # days
+          
+      stockout:
+        conditions:
+          - stock_level: 0
+          - active_sales: true
+        action: "emergency_stockout_protocol"
+        config:
+          pause_advertising: true
+          customer_notification: true
+          
+      overstock:
+        conditions:
+          - stock_level: ">max_stock"
+          - slow_moving: true
+        action: "clearance_strategy"
+        config:
+          discount_progression: [10, 20, 30] # %
+          time_intervals: [7, 14, 30] # days
+
+  review_monitoring:
+    enabled: true
+    frequency: "every_4_hours"
+    actions:
+      new_review:
+        conditions:
+          - new_review_detected: true
+        action: "analyze_sentiment_and_respond"
+        config:
+          auto_response: false
+          sentiment_analysis: true
+          
+      rating_drop:
+        conditions:
+          - avg_rating: "<4.0"
+          - rating_change: ">0.2_decrease"
+        action: "review_crisis_protocol"
+        config:
+          immediate_alert: true
+          analysis_required: true
+          
+      review_velocity:
+        conditions:
+          - review_rate: "<normal_velocity"
+          - time_period: "7_days"
+        action: "investigate_review_slowdown"
+        config:
+          competitive_comparison: true
+
+  financial_monitoring:
+    enabled: false # Enabled in active/scaled states
+    frequency: "daily"
+    actions:
+      margin_erosion:
+        conditions:
+          - gross_margin: "<target_margin"
+          - trend_direction: "decreasing"
+        action: "margin_recovery_analysis"
+        config:
+          cost_analysis: true
+          pricing_recommendations: true
+          
+      roas_decline:
+        conditions:
+          - roas: "<target_roas"
+          - campaign_performance: "declining"
+        action: "campaign_optimization"
+        config:
+          keyword_analysis: true
+          ad_creative_refresh: true
+          
+      cash_flow_alert:
+        conditions:
+          - inventory_investment: ">cash_available"
+          - upcoming_orders: true
+        action: "cash_flow_planning"
+        config:
+          reorder_prioritization: true
+          payment_term_negotiation: true
+
+content_automation:
+  asset_management:
+    enabled: true
+    frequency: "daily"
+    actions:
+      - action: "scan_new_assets"
+        config:
+          auto_tag: true
+          auto_resize: true
+          quality_check: true
+          
+      - action: "optimize_existing_assets"
+        config:
+          compression: true
+          format_conversion: true
+          backup_originals: true
+
+  content_generation:
+    enabled: false # Manual activation required
+    frequency: "weekly"
+    actions:
+      social_media:
+        platforms: ["instagram", "tiktok", "facebook"]
+        content_types: ["product_showcase", "lifestyle", "educational"]
+        config:
+          brand_voice_compliance: true
+          visual_style_compliance: true
+          
+      email_marketing:
+        campaigns: ["product_launch", "educational", "promotional"]
+        config:
+          personalization: true
+          a_b_testing: true
+
+platform_automation:
+  amazon:
+    enabled: false # State-dependent
+    actions:
+      listing_optimization:
+        frequency: "weekly"
+        optimizations:
+          - keyword_density_check
+          - competitor_analysis
+          - title_performance_review
+          
+      advertising_management:
+        frequency: "daily"
+        optimizations:
+          - bid_adjustments
+          - negative_keyword_harvesting
+          - budget_reallocation
+          
+      inventory_sync:
+        frequency: "hourly"
+        config:
+          automatic_updates: true
+          buffer_management: true
+
+  shopify:
+    enabled: false # State-dependent
+    actions:
+      product_sync:
+        frequency: "hourly"
+        config:
+          price_sync: true
+          inventory_sync: true
+          content_sync: false # Manual only
+          
+      seo_optimization:
+        frequency: "weekly"
+        config:
+          meta_tags: true
+          alt_text: true
+          sitemap_updates: true
+
+notification_settings:
+  channels:
+    email:
+      enabled: true
+      address: ""
+      priority_threshold: "medium"
+      
+    slack:
+      enabled: false
+      webhook_url: ""
+      priority_threshold: "high"
+      
+    push:
+      enabled: true
+      priority_threshold: "urgent"
+
+  escalation_rules:
+    low_priority:
+      response_time: "24_hours"
+      auto_resolve: true
+      
+    medium_priority:
+      response_time: "4_hours"
+      auto_resolve: false
+      
+    high_priority:
+      response_time: "1_hour"
+      auto_escalate: true
+      
+    urgent:
+      response_time: "15_minutes"
+      immediate_alert: true
+
+error_handling:
+  retry_logic:
+    max_attempts: 3
+    backoff_strategy: "exponential"
+    base_delay: 60 # seconds
+    
+  fallback_actions:
+    api_failure: "queue_for_manual_review"
+    rate_limit: "schedule_retry"
+    authentication_error: "alert_admin"
+    
+  logging:
+    level: "info"
+    retention_days: 30
+    include_stack_traces: true

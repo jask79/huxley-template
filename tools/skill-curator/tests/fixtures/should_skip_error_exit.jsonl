@@ -1,0 +1,13 @@
+{"type":"system","subtype":"bridge_status","version":"2.1.131","sessionId":"fix-004","timestamp":"2026-05-06T00:00:00.000Z"}
+{"type":"user","sessionId":"fix-004","message":{"role":"user","content":"deploy this thing"}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/foo/deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"./deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t3","name":"Edit","input":{"file_path":"/foo/deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t4","name":"Bash","input":{"command":"./deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t5","name":"Read","input":{"file_path":"/foo/logs.txt"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t6","name":"Bash","input":{"command":"./deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t7","name":"Write","input":{"file_path":"/foo/fix.py"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"tool_use","id":"t8","name":"Bash","input":{"command":"./deploy.sh"}}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"text","text":"Traceback (most recent call last):\n  File deploy.py, line 42\nException: connection refused"}]}}
+{"type":"assistant","sessionId":"fix-004","message":{"role":"assistant","content":[{"type":"text","text":"This failed. I wasn't able to complete the deploy."}]}}
+{"type":"user","sessionId":"fix-004","message":{"role":"user","content":"ugh"}}

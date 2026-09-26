@@ -1,0 +1,7 @@
+{
+  "name": "Huxley Plugin Marketplace",
+  "description": "Huxley plugin marketplace for forked, customized, and original plugins maintained by this Huxley install",
+  "version": "1.0.0",
+  "author": "{{USER_NAME}}",
+  "plugins": []
+}

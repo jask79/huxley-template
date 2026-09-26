@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Feature Loop PRD Schema",
+  "description": "Schema for Product Requirements Documents used in Huxley Feature Loop autonomous development",
+  "type": "object",
+  "required": ["feature", "tasks"],
+  "properties": {
+    "feature": {
+      "type": "string",
+      "description": "Feature name for human readability",
+      "examples": ["User Authentication", "Payment Processing", "Real-time Notifications"]
+    },
+    "branch": {
+      "type": "string",
+      "description": "Git branch name for this feature (defaults to 'feature/[sanitized-name]')",
+      "pattern": "^[a-zA-Z0-9/_-]+$",
+      "examples": ["feature/user-auth", "feature/payment-integration"]
+    },
+    "maxIterations": {
+      "type": "integer",
+      "description": "Maximum iterations before loop terminates (default: 10)",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 10
+    },
+    "governance": {
+      "type": "object",
+      "description": "Governance settings for quality and safety gates",
+      "properties": {
+        "requireValidation": {
+          "type": "boolean",
+          "description": "Require Validator agent to verify each task before marking complete (default: true)",
+          "default": true
+        },
+        "notifyOnComplete": {
+          "type": "boolean",
+          "description": "Send macOS notification when loop completes or reaches max iterations (default: true)",
+          "default": true
+        },
+        "costAlertThreshold": {
+          "type": "integer",
+          "description": "Iteration number at which to start warning about costs (default: 5)",
+          "minimum": 1,
+          "default": 5
+        }
+      },
+      "additionalProperties": false
+    },
+    "tasks": {
+      "type": "array",
+      "description": "List of tasks to complete for this feature",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "description", "specialist", "priority", "acceptanceCriteria"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique task identifier (e.g., 'AUTH-001', 'PAY-002')",
+            "pattern": "^[A-Z]+-[0-9]+$",
+            "examples": ["AUTH-001", "PAY-002", "NOTIF-003"]
+          },
+          "title": {
+            "type": "string",
+            "description": "Short task title",
+            "minLength": 1,
+            "maxLength": 100,
+            "examples": ["Implement JWT token generation", "Create payment webhook handler"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed task description with context and requirements",
+            "minLength": 1,
+            "examples": [
+              "Create a FastAPI endpoint that generates JWT access tokens and refresh tokens using RS256 algorithm. Store refresh tokens in Redis with 7-day expiry."
+            ]
+          },
+          "specialist": {
+            "type": "string",
+            "description": "Huxley agent to delegate this task to (will be resolved to full emoji name)",
+            "enum": [
+              "Backend Dev",
+              "Frontend Dev",
+              "Mobile Dev",
+              "UI Designer",
+              "Graphic Designer",
+              "Camera Man",
+              "Studio Engineer",
+              "macOS Dev",
+              "Ecomm Bro",
+              "Automator",
+              "Bowser",
+              "Research Agent",
+              "BOSS",
+              "System Architect",
+              "Security Analyst",
+              "Code Reviewer",
+              "Debugger",
+              "Validator",
+              "Business Analyst",
+              "Content Marketer",
+              "SEO Analyzer",
+              "Product Strategist",
+              "Marketing Analyst",
+              "Social Media Marketer",
+              "MCP Server Dude",
+              "Blockchain Agent",
+              "2nd Brain Wizard",
+              "AI Nerd",
+              "Venture Analyst"
+            ]
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Priority level (1 = highest, lower numbers execute first)",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "acceptanceCriteria": {
+            "type": "array",
+            "description": "List of criteria that must be met for task to pass",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "Returns valid JWT on successful authentication",
+                "Includes refresh token in response payload",
+                "Tokens expire correctly after configured duration",
+                "Error handling for invalid credentials"
+              ]
+            }
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "Whether task has passed all acceptance criteria (set by loop)",
+            "default": false
+          },
+          "completedAt": {
+            "type": ["string", "null"],
+            "description": "ISO 8601 timestamp when task was completed (set by loop)",
+            "format": "date-time",
+            "examples": ["2025-01-13T10:30:00Z"],
+            "default": null
+          },
+          "learnings": {
+            "type": "array",
+            "description": "Key learnings captured during task implementation (appended by loop)",
+            "items": {
+              "type": "string",
+              "examples": [
+                "Used PyJWT library with RS256 algorithm for better security",
+                "Stored refresh tokens in Redis with 7-day expiry",
+                "Added rate limiting to prevent brute force attacks"
+              ]
+            },
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

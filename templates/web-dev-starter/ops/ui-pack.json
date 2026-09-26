@@ -1,0 +1,36 @@
+{
+  "$schema": "https://example.com/schemas/ui-pack.json",
+  "pack": "modern-web",
+  "description": "Modern web development with shadcn/ui and Radix primitives",
+  "libraries": {
+    "shadcn-ui": {
+      "enabled": true,
+      "priority": 1,
+      "config": "components.json",
+      "description": "Copy-paste React components built on Radix + Tailwind"
+    },
+    "radix-ui": {
+      "enabled": true,
+      "priority": 2,
+      "scope": "primitives",
+      "description": "Unstyled, accessible UI primitives"
+    },
+    "tailwindcss": {
+      "enabled": true,
+      "priority": 1,
+      "config": "tailwind.config.js",
+      "description": "Utility-first CSS framework"
+    }
+  },
+  "constraints": {
+    "bundle_size": "< 500kb",
+    "accessibility": "WCAG 2.1 AA",
+    "browser_support": "modern",
+    "framework": "react"
+  },
+  "agent_instructions": {
+    "primary": "Use shadcn/ui components first, fallback to Radix primitives for custom needs",
+    "styling": "Tailwind CSS with design tokens and CSS variables",
+    "customization": "Override shadcn defaults via Tailwind variants"
+  }
+}

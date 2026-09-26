@@ -1,0 +1,254 @@
+# Mobile Developer Sharp Edges
+# Production gotchas for iOS (Swift) and React Native development
+
+edges:
+  # === CRITICAL: iOS Security ===
+
+  - id: hardcoded_secrets_ios
+    severity: critical
+    category: security
+    pattern: "Hardcoded API keys or secrets in iOS code"
+    detection:
+      - type: regex
+        value: '(?:let|var)\s+\w*(?:api|secret|key|token)\w*\s*=\s*"[^"]{8,}"'
+        files: ["*.swift"]
+    why: "Secrets in binaries can be extracted with reverse engineering"
+    fix: "Use Keychain for secrets, or fetch from secure backend"
+    examples:
+      bad: |
+        let apiKey = "sk-1234567890abcdef"
+      good: |
+        let apiKey = KeychainService.shared.get("apiKey")
+    tags: ["secrets", "ios"]
+
+  - id: insecure_storage_userdefaults
+    severity: critical
+    category: security
+    pattern: "Storing sensitive data in UserDefaults"
+    detection:
+      - type: regex
+        value: 'UserDefaults.*(?:token|password|secret|key|credential)'
+        files: ["*.swift"]
+    why: "UserDefaults is unencrypted and easily accessible"
+    fix: "Use Keychain for sensitive data"
+    examples:
+      bad: |
+        UserDefaults.standard.set(authToken, forKey: "token")
+      good: |
+        try KeychainService.shared.save(authToken, forKey: "token")
+    tags: ["storage", "keychain"]
+
+  - id: disabled_ats
+    severity: critical
+    category: security
+    pattern: "App Transport Security disabled"
+    detection:
+      - type: regex
+        value: 'NSAllowsArbitraryLoads.*true|NSExceptionAllowsInsecureHTTPLoads'
+        files: ["*.plist", "*.swift"]
+    why: "Disabling ATS allows unencrypted HTTP connections"
+    fix: "Only allow HTTPS, use exception domains sparingly"
+    tags: ["networking", "https"]
+
+  # === WARNING: Memory & Performance ===
+
+  - id: strong_reference_cycle
+    severity: warning
+    category: performance
+    pattern: "Potential strong reference cycle in closure"
+    detection:
+      - type: regex
+        value: '\{\s*(?!.*\[weak\s+self\]|\[unowned\s+self\]).*self\.'
+        files: ["*.swift"]
+    why: "Strong reference cycles cause memory leaks"
+    fix: "Use [weak self] or [unowned self] in closures"
+    examples:
+      bad: |
+        someAsyncOperation { result in
+            self.updateUI(result)
+        }
+      good: |
+        someAsyncOperation { [weak self] result in
+            self?.updateUI(result)
+        }
+    tags: ["memory", "closures"]
+
+  - id: force_unwrap
+    severity: warning
+    category: correctness
+    pattern: "Force unwrapping optionals"
+    detection:
+      - type: regex
+        value: '\w+!(?!\s*=)'
+        files: ["*.swift"]
+    why: "Force unwrap crashes if value is nil"
+    fix: "Use optional binding, nil coalescing, or guard statements"
+    examples:
+      bad: |
+        let name = user!.name
+      good: |
+        guard let user = user else { return }
+        let name = user.name
+    tags: ["optionals", "crash"]
+
+  - id: main_thread_blocking
+    severity: warning
+    category: performance
+    pattern: "Blocking operation on main thread"
+    detection:
+      - type: regex
+        value: '(?:Data\(contentsOf:|URLSession.*\.data\(|Thread\.sleep)'
+        files: ["*.swift"]
+    why: "Blocking main thread causes UI freezes and watchdog kills"
+    fix: "Use async/await or dispatch to background queue"
+    examples:
+      bad: |
+        let data = try Data(contentsOf: url)
+      good: |
+        Task {
+            let (data, _) = try await URLSession.shared.data(from: url)
+        }
+    tags: ["threading", "ui"]
+
+  - id: missing_dispatch_main
+    severity: warning
+    category: correctness
+    pattern: "UI update from background thread"
+    detection:
+      - type: regex
+        value: 'DispatchQueue\.global\(\)\.async\s*\{[^}]*(?:\.text|\.image|\.isHidden|reloadData)'
+        files: ["*.swift"]
+    why: "UI updates from background thread cause crashes or undefined behavior"
+    fix: "Dispatch UI updates to main thread"
+    examples:
+      bad: |
+        DispatchQueue.global().async {
+            self.label.text = result
+        }
+      good: |
+        DispatchQueue.global().async {
+            DispatchQueue.main.async {
+                self.label.text = result
+            }
+        }
+    tags: ["threading", "ui"]
+
+  # === WARNING: React Native ===
+
+  - id: bridge_overuse
+    severity: warning
+    category: performance
+    pattern: "Excessive JS-Native bridge crossing"
+    detection:
+      - type: semantic
+        description: "Frequent small native module calls in loops or renders"
+    why: "Bridge crossing is expensive, batching improves performance"
+    fix: "Batch operations, use Turbo Modules, minimize bridge traffic"
+    tags: ["react-native", "bridge"]
+
+  - id: inline_styles_rn
+    severity: info
+    category: performance
+    pattern: "Inline styles creating new objects on render"
+    detection:
+      - type: regex
+        value: 'style=\{\{[^}]+\}\}'
+        files: ["*.tsx", "*.jsx"]
+    why: "Inline style objects are recreated each render"
+    fix: "Use StyleSheet.create for static styles"
+    examples:
+      bad: |
+        <View style={{ padding: 10, margin: 5 }} />
+      good: |
+        const styles = StyleSheet.create({ container: { padding: 10, margin: 5 } })
+        <View style={styles.container} />
+    tags: ["react-native", "styles"]
+
+  # === WARNING: SwiftUI ===
+
+  - id: swiftui_heavy_body
+    severity: warning
+    category: performance
+    pattern: "Complex computation in SwiftUI body"
+    detection:
+      - type: semantic
+        description: "Filtering, sorting, or heavy computation directly in body property"
+    why: "Body is called frequently; heavy work causes stuttering"
+    fix: "Move computation to @State, @StateObject, or separate functions"
+    examples:
+      bad: |
+        var body: some View {
+            List(items.filter { $0.isActive }.sorted())
+        }
+      good: |
+        var body: some View {
+            List(filteredItems)
+        }
+        var filteredItems: [Item] {
+            items.filter { $0.isActive }.sorted()
+        }
+    tags: ["swiftui", "performance"]
+
+  - id: missing_equatable_state
+    severity: warning
+    category: performance
+    pattern: "Non-Equatable type in @State or @Published"
+    detection:
+      - type: semantic
+        description: "Complex type without Equatable conformance used in reactive property"
+    why: "SwiftUI can't optimize diff without Equatable"
+    fix: "Conform state types to Equatable"
+    tags: ["swiftui", "state"]
+
+  # === INFO: Best Practices ===
+
+  - id: missing_accessibility_label
+    severity: info
+    category: accessibility
+    pattern: "Interactive element without accessibility label"
+    detection:
+      - type: regex
+        value: '(?:Button|Image)\s*\{[^}]*\}(?!.*accessibilityLabel)'
+        files: ["*.swift"]
+    why: "VoiceOver users can't understand unlabeled controls"
+    fix: "Add accessibilityLabel to all interactive elements"
+    examples:
+      bad: |
+        Button(action: share) {
+            Image(systemName: "square.and.arrow.up")
+        }
+      good: |
+        Button(action: share) {
+            Image(systemName: "square.and.arrow.up")
+        }
+        .accessibilityLabel("Share")
+    tags: ["a11y", "voiceover"]
+
+  - id: print_in_production
+    severity: info
+    category: maintainability
+    pattern: "print() statements in production code"
+    detection:
+      - type: regex
+        value: '\bprint\s*\('
+        files: ["*.swift"]
+    why: "print statements affect performance and leak to device logs"
+    fix: "Use os.log or remove before release"
+    examples:
+      bad: |
+        print("User tapped button")
+      good: |
+        Logger.ui.debug("User tapped button")
+    tags: ["logging", "production"]
+
+  - id: synchronous_image_load
+    severity: warning
+    category: performance
+    pattern: "Synchronous image loading in cell"
+    detection:
+      - type: regex
+        value: 'UIImage\(data:\s*(?:try\s+)?Data\(contentsOf:'
+        files: ["*.swift"]
+    why: "Synchronous image loads block scrolling"
+    fix: "Use async image loading: SDWebImage, Kingfisher, or URLSession"
+    tags: ["images", "scrolling"]

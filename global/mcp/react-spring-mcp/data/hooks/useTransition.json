@@ -1,0 +1,60 @@
+{
+  "name": "useTransition",
+  "signature": "useTransition(items: T[], config: TransitionConfig): Transition[]",
+  "description": "Animates components as they mount and unmount from the DOM",
+  "parameters": [
+    {
+      "name": "items",
+      "type": "T | T[]",
+      "description": "Items to track (can be single item or array)"
+    },
+    {
+      "name": "config",
+      "type": "TransitionConfig",
+      "description": "Transition configuration",
+      "properties": [
+        {
+          "name": "keys",
+          "type": "function | string",
+          "description": "Function to get unique key for each item"
+        },
+        {
+          "name": "from",
+          "type": "object",
+          "description": "Initial values when mounting"
+        },
+        {
+          "name": "enter",
+          "type": "object",
+          "description": "Values when entering"
+        },
+        {
+          "name": "leave",
+          "type": "object",
+          "description": "Values when leaving"
+        }
+      ]
+    }
+  ],
+  "returns": {
+    "type": "Transition[]",
+    "description": "Array of transition objects with style and item data"
+  },
+  "examples": [
+    {
+      "title": "Basic list transitions",
+      "code": "const [items, setItems] = useState(['A', 'B', 'C'])\nconst transitions = useTransition(items, {\n  keys: item => item,\n  from: { opacity: 0, transform: 'translateX(-20px)' },\n  enter: { opacity: 1, transform: 'translateX(0)' },\n  leave: { opacity: 0, transform: 'translateX(20px)' }\n})\n\nreturn transitions((style, item) => (\n  <animated.div style={style}>{item}</animated.div>\n))"
+    },
+    {
+      "title": "Conditional rendering",
+      "code": "const [show, setShow] = useState(true)\nconst transitions = useTransition(show, {\n  from: { opacity: 0, scale: 0.8 },\n  enter: { opacity: 1, scale: 1 },\n  leave: { opacity: 0, scale: 0.8 }\n})\n\nreturn transitions((style, item) =>\n  item ? <animated.div style={style}>Content</animated.div> : null\n)"
+    }
+  ],
+  "commonPatterns": [
+    "Modal animations",
+    "List add/remove",
+    "Route transitions",
+    "Notification toasts"
+  ],
+  "relatedHooks": ["useSpring", "useTrail", "useSprings"]
+}

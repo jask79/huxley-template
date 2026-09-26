@@ -1,0 +1,60 @@
+name: UI Wireframe
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "4:3"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - layout_structure
+    - component_clarity
+    - spacing_consistency
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: wireframe
+  stroke_weight: 1.5
+  corner_radius: 4
+  icon_style: "line"
+  file_size_limit_kb: 300
+  export_formats:
+    - svg
+    - png
+  palette:
+    primary: "#3B82F6"
+    neutral: "#9CA3AF"
+    foreground: "#374151"
+    background: "#FFFFFF"

@@ -1,0 +1,7 @@
+{
+  "extends": "default",
+  "servers": [
+    {"name": "xcodebuild"},
+    {"name": "ios-sim"}
+  ]
+}

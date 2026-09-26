@@ -1,0 +1,11 @@
+{
+  "extends": "webdev", 
+  "description": "Enterprise-grade UI with comprehensive component libraries",
+  "servers": [
+    {"name": "shadcn-ui"},
+    {"name": "preline-ui"},
+    {"name": "untitled-ui"},
+    {"name": "screencoder"}
+  ],
+  "ui_pack": "enterprise"
+}

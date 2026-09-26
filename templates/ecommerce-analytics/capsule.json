@@ -1,0 +1,276 @@
+{
+  "id": "",
+  "display_name": "",
+  "type": "ecommerce-analytics",
+  "area": "ecommerce",
+  "description": "Analytics and reporting capsule for e-commerce insights",
+  "owners": ["{{USER_LOGIN}}"],
+  "created_at": "",
+  "version": "1.0.0",
+  
+  "analytics_config": {
+    "analysis_type": "performance_report",
+    "scope": "brand_level",
+    "time_period": {
+      "start_date": "",
+      "end_date": "",
+      "granularity": "daily"
+    },
+    "comparison_periods": {
+      "previous_period": true,
+      "year_over_year": false,
+      "benchmark": false
+    }
+  },
+  
+  "data_sources": {
+    "brand_data": {
+      "source": "brand_capsules",
+      "metrics": ["revenue", "orders", "traffic", "conversion_rate"],
+      "platforms": ["amazon", "shopify", "google_ads"]
+    },
+    "external_benchmarks": {
+      "industry_data": false,
+      "competitor_intelligence": false,
+      "market_trends": false
+    },
+    "operational_data": {
+      "inventory_levels": true,
+      "fulfillment_metrics": true,
+      "customer_service": false
+    }
+  },
+  
+  "metrics_framework": {
+    "financial_metrics": {
+      "revenue": {
+        "total_revenue": true,
+        "revenue_growth": true,
+        "revenue_per_customer": true,
+        "average_order_value": true
+      },
+      "profitability": {
+        "gross_margin": true,
+        "net_profit": true,
+        "profit_margin": true,
+        "contribution_margin": true
+      },
+      "efficiency": {
+        "cost_per_acquisition": true,
+        "return_on_ad_spend": true,
+        "customer_lifetime_value": true,
+        "payback_period": true
+      }
+    },
+    "operational_metrics": {
+      "sales_performance": {
+        "units_sold": true,
+        "conversion_rate": true,
+        "cart_abandonment": true,
+        "repeat_purchase_rate": true
+      },
+      "marketing_performance": {
+        "traffic_sources": true,
+        "click_through_rate": true,
+        "impression_share": true,
+        "brand_awareness": false
+      },
+      "customer_metrics": {
+        "new_vs_returning": true,
+        "customer_satisfaction": false,
+        "retention_rate": true,
+        "churn_rate": true
+      }
+    },
+    "platform_metrics": {
+      "amazon": {
+        "search_ranking": true,
+        "buy_box_percentage": true,
+        "review_velocity": true,
+        "sponsored_product_performance": true
+      },
+      "shopify": {
+        "website_traffic": true,
+        "page_speed": false,
+        "mobile_conversion": true,
+        "email_performance": false
+      }
+    }
+  },
+  
+  "analysis_methods": {
+    "descriptive": {
+      "trend_analysis": true,
+      "cohort_analysis": true,
+      "segmentation": true,
+      "correlation_analysis": true
+    },
+    "predictive": {
+      "forecasting": false,
+      "demand_prediction": false,
+      "churn_prediction": false,
+      "price_optimization": false
+    },
+    "diagnostic": {
+      "attribution_modeling": true,
+      "funnel_analysis": true,
+      "root_cause_analysis": true,
+      "performance_drivers": true
+    }
+  },
+  
+  "reporting": {
+    "executive_summary": {
+      "key_metrics": true,
+      "performance_highlights": true,
+      "recommendations": true,
+      "action_items": true
+    },
+    "detailed_analysis": {
+      "metric_deep_dives": true,
+      "trend_explanations": true,
+      "comparative_analysis": true,
+      "statistical_significance": false
+    },
+    "visualizations": {
+      "charts": ["line", "bar", "pie", "heatmap"],
+      "dashboards": true,
+      "interactive_elements": false,
+      "mobile_friendly": true
+    },
+    "formats": {
+      "pdf_report": true,
+      "html_dashboard": true,
+      "csv_data": true,
+      "powerpoint": false
+    }
+  },
+  
+  "automation": {
+    "data_collection": {
+      "automated_refresh": true,
+      "real_time_updates": false,
+      "scheduled_pulls": true,
+      "api_integration": true
+    },
+    "analysis_execution": {
+      "auto_calculations": true,
+      "anomaly_detection": true,
+      "alert_triggers": true,
+      "recommendation_engine": false
+    },
+    "report_distribution": {
+      "scheduled_delivery": true,
+      "email_distribution": true,
+      "slack_notifications": false,
+      "dashboard_updates": true
+    }
+  },
+  
+  "quality_assurance": {
+    "data_validation": {
+      "completeness_checks": true,
+      "accuracy_verification": true,
+      "consistency_validation": true,
+      "freshness_monitoring": true
+    },
+    "analysis_validation": {
+      "calculation_verification": true,
+      "logic_review": true,
+      "peer_review": false,
+      "audit_trail": true
+    },
+    "output_quality": {
+      "formatting_standards": true,
+      "readability_check": true,
+      "actionability_review": true,
+      "stakeholder_feedback": true
+    }
+  },
+  
+  "insights_generation": {
+    "pattern_recognition": {
+      "seasonal_trends": true,
+      "growth_patterns": true,
+      "customer_behavior": true,
+      "competitive_dynamics": false
+    },
+    "opportunity_identification": {
+      "growth_opportunities": true,
+      "cost_reduction": true,
+      "optimization_areas": true,
+      "market_expansion": false
+    },
+    "risk_assessment": {
+      "performance_risks": true,
+      "market_risks": false,
+      "operational_risks": true,
+      "financial_risks": true
+    }
+  },
+  
+  "stakeholder_customization": {
+    "executive_view": {
+      "high_level_metrics": true,
+      "strategic_insights": true,
+      "decision_support": true,
+      "action_priorities": true
+    },
+    "operational_view": {
+      "detailed_metrics": true,
+      "tactical_insights": true,
+      "process_optimization": true,
+      "implementation_guidance": true
+    },
+    "marketing_view": {
+      "campaign_performance": true,
+      "audience_insights": true,
+      "channel_optimization": true,
+      "creative_recommendations": true
+    }
+  },
+  
+  "cross_brand_analysis": {
+    "enabled": false,
+    "comparison_metrics": [],
+    "benchmark_analysis": false,
+    "best_practice_sharing": false,
+    "portfolio_insights": false
+  },
+  
+  "schedule": {
+    "frequency": "monthly",
+    "delivery_date": "5th",
+    "preparation_days": 3,
+    "review_period": 2,
+    "stakeholder_meetings": true
+  },
+  
+  "dependencies": {
+    "data_sources": ["brand_capsules", "platform_apis"],
+    "tools": ["pandas", "plotly", "jinja2"],
+    "services": ["brand_data_service"],
+    "infrastructure": ["storage", "compute"]
+  },
+  
+  "outputs": {
+    "reports": {
+      "location": "reports/",
+      "naming_convention": "{brand_id}_{report_type}_{period}.{format}",
+      "retention_policy": "24_months"
+    },
+    "dashboards": {
+      "location": "dashboards/",
+      "access_control": true,
+      "update_frequency": "daily"
+    },
+    "data_exports": {
+      "location": "exports/",
+      "formats": ["csv", "json"],
+      "compression": true
+    }
+  },
+  
+  "tags": ["ecommerce", "analytics", "reporting"],
+  "lane": "standard"
+}

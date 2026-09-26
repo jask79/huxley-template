@@ -1,0 +1,61 @@
+name: Badge Emblem
+media_type: vector
+model: local/svgwrite
+auth: local
+auth_provider: local
+
+generation:
+  resolution: 2K
+  aspect_ratios:
+    - "1:1"
+
+refinement:
+  mode: autonomous
+  max_iterations: 1
+  quality_threshold: 0.85
+  regression_cutoff: true
+  evaluate_criteria:
+    - visual_balance
+    - text_clarity
+    - decorative_detail
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - svg_valid_structure
+    - svg_has_viewbox
+    - svg_has_layers
+    - svg_text_editable
+    - svg_file_size
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/vectors/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - svg
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true
+
+vector:
+  type: badge
+  stroke_weight: 2
+  corner_radius: 0
+  icon_style: "filled"
+  file_size_limit_kb: 200
+  export_formats:
+    - svg
+    - png
+  palette:
+    primary: "#1D4ED8"
+    secondary: "#7C3AED"
+    accent: "#F59E0B"
+    foreground: "#111827"
+    background: "#FFFFFF"

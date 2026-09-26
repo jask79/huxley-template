@@ -1,0 +1,12 @@
+{"type":"system","subtype":"bridge_status","version":"2.1.131","sessionId":"fix-003","timestamp":"2026-05-06T00:00:00.000Z"}
+{"type":"user","sessionId":"fix-003","message":{"role":"user","content":"check git status a bunch of times"}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t3","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t4","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t5","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t6","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t7","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t8","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"assistant","sessionId":"fix-003","message":{"role":"assistant","content":[{"type":"tool_use","id":"t9","name":"Bash","input":{"command":"git status"}}]}}
+{"type":"user","sessionId":"fix-003","message":{"role":"user","content":"thanks"}}

@@ -1,0 +1,103 @@
+market_position: ""
+category: ""
+subcategory: ""
+
+differentiation:
+  primary: ""
+  secondary: ""
+  proof_points:
+    - ""
+    - ""
+
+price_positioning:
+  tier: "" # budget, mid-tier, premium, luxury
+  price_range: ""
+  justification: ""
+
+target_segments:
+  primary:
+    name: ""
+    size: ""
+    characteristics:
+      - ""
+      - ""
+  secondary:
+    name: ""
+    size: ""
+    characteristics:
+      - ""
+      - ""
+
+competitive_analysis:
+  direct_competitors:
+    - name: ""
+      price_point: ""
+      strengths:
+        - ""
+        - ""
+      weaknesses:
+        - ""
+        - ""
+  
+  indirect_competitors:
+    - name: ""
+      overlap: ""
+      threat_level: "" # low, medium, high
+
+positioning_statement: |
+  For [target customer] who [need/problem], [brand name] is the [category] 
+  that [key benefit] because [reasons to believe].
+
+messaging_hierarchy:
+  primary_message: ""
+  supporting_messages:
+    - ""
+    - ""
+    - ""
+
+brand_pillars:
+  - name: ""
+    description: ""
+    proof_points:
+      - ""
+      - ""
+  
+  - name: ""
+    description: ""
+    proof_points:
+      - ""
+      - ""
+
+market_trends:
+  favorable:
+    - ""
+    - ""
+  unfavorable:
+    - ""
+    - ""
+
+go_to_market_strategy:
+  launch_sequence:
+    - platform: ""
+      timeline: ""
+      rationale: ""
+  
+  expansion_plan:
+    - phase: ""
+      platforms:
+        - ""
+        - ""
+      timeline: ""
+
+success_metrics:
+  brand_awareness:
+    - metric: ""
+      target: ""
+  
+  market_share:
+    - metric: ""
+      target: ""
+  
+  financial:
+    - metric: ""
+      target: ""

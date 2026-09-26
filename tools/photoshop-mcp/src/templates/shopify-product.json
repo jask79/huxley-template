@@ -1,0 +1,25 @@
+{
+  "name": "shopify-product",
+  "description": "Shopify product hero — square 2048 source, multi-size export pack.",
+  "canvas": {
+    "width": 2048,
+    "height": 2048,
+    "dpi": 72,
+    "colorMode": "RGB",
+    "backgroundColor": [255, 255, 255]
+  },
+  "layers": [
+    {
+      "type": "image",
+      "source": "{params.product_image}",
+      "fit": "fit",
+      "smartObject": true
+    }
+  ],
+  "export": [
+    {
+      "preset": "shopify-product",
+      "filename": "{params.slug}"
+    }
+  ]
+}

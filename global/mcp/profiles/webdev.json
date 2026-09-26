@@ -1,0 +1,8 @@
+{
+  "extends": "default",
+  "servers": [
+    {"name": "shopify"},
+    {"name": "cms"},
+    {"name": "shadcn-ui"}
+  ]
+}

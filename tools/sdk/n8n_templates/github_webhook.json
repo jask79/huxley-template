@@ -1,0 +1,179 @@
+{
+  "name": "SDK Workflow - GitHub Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "github-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "GitHub Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "github-webhook",
+      "id": "github-webhook-node"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.ref }}",
+              "operation": "equals",
+              "value2": "refs/heads/main"
+            }
+          ]
+        }
+      },
+      "name": "Filter Main Branch",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "id": "filter-branch-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/webhook/observe",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "workflow",
+              "value": "github_push"
+            },
+            {
+              "name": "observation",
+              "value": "Push to main: {{ $json.head_commit.message }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ { \"commit\": $json.head_commit.id, \"author\": $json.head_commit.author.name, \"branch\": $json.ref } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Log GitHub Push",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 200],
+      "id": "log-push-node"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/webhook/trigger",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "workflow",
+              "value": "ci_pipeline"
+            },
+            {
+              "name": "parameters",
+              "value": "={{ { \"commit\": $json.head_commit.id, \"branch\": \"main\" } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Trigger CI Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 200],
+      "id": "trigger-ci-node"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"processed\", \"commit\": $json.head_commit.id } }}"
+      },
+      "name": "Respond to GitHub",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "id": "respond-github-node"
+    }
+  ],
+  "connections": {
+    "GitHub Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Main Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Main Branch": {
+      "main": [
+        [
+          {
+            "node": "Log GitHub Push",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log GitHub Push": {
+      "main": [
+        [
+          {
+            "node": "Trigger CI Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger CI Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Respond to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

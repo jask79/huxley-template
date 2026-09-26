@@ -1,0 +1,202 @@
+catalog_info:
+  brand_id: ""
+  catalog_version: "1.0"
+  last_updated: ""
+  total_products: 0
+  active_products: 0
+
+product_categories:
+  - id: ""
+    name: ""
+    description: ""
+    parent_category: null
+    display_order: 1
+
+products:
+  - sku: ""
+    name: ""
+    description: ""
+    category_id: ""
+    status: "draft" # draft, active, discontinued
+    
+    # Product Details
+    dimensions:
+      length: 0
+      width: 0
+      height: 0
+      weight: 0
+      units: "inches/lbs"
+    
+    # Pricing Strategy
+    pricing:
+      cost_basis: 0.00
+      target_margin: 0.30
+      msrp: 0.00
+      map_price: 0.00 # Minimum Advertised Price
+      current_price: 0.00
+      
+    # Platform Presence
+    platforms:
+      amazon:
+        enabled: false
+        asin: ""
+        parent_asin: ""
+        listing_status: "not_created"
+        last_sync: ""
+        
+      shopify:
+        enabled: false
+        product_id: ""
+        handle: ""
+        listing_status: "not_created"
+        last_sync: ""
+        
+      google_shopping:
+        enabled: false
+        product_id: ""
+        listing_status: "not_created"
+        last_sync: ""
+    
+    # Content & Assets
+    content:
+      title_formula: "[Brand] [Product] - [Key Benefit] - [Size/Variant]"
+      bullet_points:
+        - ""
+        - ""
+        - ""
+      description_template: "long_form"
+      keywords:
+        primary: []
+        secondary: []
+        negative: []
+        
+    assets:
+      main_image: ""
+      lifestyle_images: []
+      infographic_images: []
+      video_url: ""
+      
+    # Variants (if applicable)
+    variants:
+      - sku: ""
+        name: ""
+        attributes:
+          size: ""
+          color: ""
+        pricing:
+          cost: 0.00
+          price: 0.00
+        inventory:
+          current_stock: 0
+          reorder_point: 0
+          max_stock: 0
+        platforms:
+          amazon:
+            asin: ""
+          shopify:
+            variant_id: ""
+    
+    # Marketing
+    marketing:
+      launch_date: ""
+      seasonal_relevance: []
+      target_audience: ""
+      key_benefits:
+        - ""
+        - ""
+      competitive_advantages:
+        - ""
+        - ""
+        
+    # Operations
+    operations:
+      supplier: ""
+      lead_time_days: 0
+      moq: 1 # Minimum Order Quantity
+      packaging:
+        type: ""
+        dimensions: {}
+        weight: 0
+      shipping:
+        fragile: false
+        hazmat: false
+        restrictions: []
+        
+    # Analytics
+    performance:
+      launch_date: ""
+      total_sales: 0
+      total_revenue: 0.00
+      avg_rating: 0.0
+      review_count: 0
+      return_rate: 0.0
+      
+    # Lifecycle
+    lifecycle:
+      stage: "development" # development, launch, growth, maturity, decline
+      planned_discontinuation: null
+      replacement_product: null
+
+# Product Relationships
+product_bundles:
+  - bundle_sku: ""
+    name: ""
+    component_skus: []
+    bundle_discount: 0.00
+    bundle_price: 0.00
+
+cross_sells:
+  - from_sku: ""
+    to_sku: ""
+    relationship: "frequently_bought_together"
+    conversion_rate: 0.0
+
+upsells:
+  - from_sku: ""
+    to_sku: ""
+    price_difference: 0.00
+    value_proposition: ""
+
+# Catalog Rules
+pricing_rules:
+  - id: "minimum_margin"
+    type: "margin_floor"
+    params:
+      min_margin_pct: 0.25
+    applies_to: "all"
+    
+  - id: "map_protection"
+    type: "minimum_price"
+    params:
+      floor_type: "map_price"
+    applies_to: "all"
+
+inventory_rules:
+  - id: "auto_reorder"
+    trigger: "stock_below_reorder_point"
+    action: "create_po_draft"
+    applies_to: "active_products"
+    
+  - id: "discontinue_slow_movers"
+    trigger: "no_sales_90_days"
+    action: "flag_for_review"
+    applies_to: "mature_products"
+
+# Catalog Metrics
+metrics:
+  total_catalog_value: 0.00
+  avg_product_margin: 0.0
+  active_product_count: 0
+  pending_launch_count: 0
+  discontinued_count: 0
+  
+  performance:
+    top_performers: [] # SKUs by revenue
+    slow_movers: [] # SKUs with low velocity
+    high_margin_products: [] # SKUs above target margin
+    
+  completeness:
+    products_missing_images: 0
+    products_missing_descriptions: 0
+    products_not_on_amazon: 0
+    products_not_on_shopify: 0

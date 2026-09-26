@@ -1,0 +1,33 @@
+name: Photo Edit
+media_type: image
+model: google/gemini-3-pro-image-preview
+profile: fast-draft
+
+generation:
+  resolution: 2K
+  aspect_ratios: ["1:1"]
+
+refinement:
+  mode: autonomous
+  max_iterations: 2
+  quality_threshold: 0.70
+  evaluate_criteria:
+    - edit_accuracy
+    - artifact_free
+  hard_checks:
+    - file_exists
+    - file_not_empty
+
+consistency:
+  reference_images: 0
+  style_weight: 0.0
+
+output:
+  directory: "generated-media/{date}/edits/"
+  naming: "{workflow}-{sequence}"
+  formats: ["png"]
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

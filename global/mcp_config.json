@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0", 
+  "description": "Global MCP role mappings - server definitions moved to project layer",
+  "extends": "./mcp/server-registry.json",
+  "mcpServers": {},
+  "roles_access": {
+    "note": "Role mappings moved to project-level .mcp.json - this file now serves as global registry reference only"
+  },
+  "mcp_overrides": {}
+}
+

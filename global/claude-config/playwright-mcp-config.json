@@ -1,0 +1,26 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "headless": false,
+      "chromiumSandbox": true,
+      "slowMo": 100
+    },
+    "contextOptions": {
+      "viewport": { "width": 1280, "height": 720 },
+      "ignoreHTTPSErrors": false
+    }
+  },
+  "network": {
+    "allowedOrigins": [],
+    "blockedOrigins": []
+  },
+  "server": {
+    "port": 3000,
+    "host": "localhost"
+  },
+  "outputDir": "/tmp/playwright-mcp-output",
+  "saveTrace": true,
+  "saveSession": false,
+  "imageResponses": "allow"
+}

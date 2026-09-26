@@ -1,0 +1,72 @@
+# Trace Illustration Workflow
+#
+# Optimized for tracing AI-generated illustrations to vectors.
+# Uses spline mode for smooth curves, higher color precision,
+# relaxed quality gate for more complex output.
+#
+# Usage:
+#   python3 tools/media-engine/cli.py generate \
+#     --workflow trace-illustration \
+#     --prompt "colorful abstract tech illustration"
+#
+# Requires: pip3 install vtracer
+
+name: AI-Traced Illustration
+description: Generate AI concept and trace to detailed illustration SVG
+media_type: vector
+pipeline_type: ai_to_vector
+auth: openrouter
+auth_provider: openrouter
+
+# AI concept generation - higher resolution for illustrations
+source:
+  model: google/gemini-2.5-flash-image
+  resolution: 2K
+  aspect_ratios: ["1:1"]
+  max_iterations: 2
+
+# VTracer parameters - detailed preset with spline mode
+trace:
+  mode: spline
+  quality: detailed
+  color_precision: 10
+  filter_speckle: 2
+  corner_threshold: 45
+  length_threshold: 2.0
+  max_iterations: 15
+  splice_threshold: 30
+  path_precision: 4
+
+# Relaxed quality gate for illustrations
+quality_gate:
+  max_paths: 1000
+  max_file_size_kb: 1000
+  max_colors: 128
+  retry_on_fail: true
+  max_retries: 3
+
+# Vector configuration
+vector:
+  type: traced
+  export_formats:
+    - svg
+    - pdf
+    - png
+  file_size_limit_kb: 1000
+  max_path_count: 1000
+
+output:
+  formats:
+    - svg
+    - pdf
+    - png
+  directory: "generated-media/{date}/"
+  naming: "traced-illustration-{sequence}"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.70
+
+provenance:
+  enabled: true

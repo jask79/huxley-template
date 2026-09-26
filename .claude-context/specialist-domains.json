@@ -1,0 +1,211 @@
+{
+  "version": "2.0.0",
+  "description": "Maps file patterns to specialist agents. Keywords removed in favor of Claude's reasoning via orchestration skill.",
+
+  "file_patterns": {
+    "🏛️ Backend Developer": {
+      "patterns": [
+        "*.py",
+        "*.go",
+        "*.rs",
+        "*.java",
+        "*.sql",
+        "*.prisma",
+        "**/api/**",
+        "**/backend/**",
+        "**/server/**",
+        "**/migrations/**",
+        "**/supabase/**",
+        "Dockerfile*",
+        "docker-compose*.yml",
+        "**/cloudflare/**",
+        "wrangler.toml",
+        "vercel.json",
+        ".env*"
+      ],
+      "exclusions": ["tools/nav.py", "monitoring/**", "global/claude-config/**", "scripts/**", "global/lib/**", "global/config/**"],
+      "reasoning_context": "Backend Developer owns server-side code, APIs, databases, deployment infrastructure, and all Cloudflare services. System-level Python files (scripts/, global/lib/, global/config/) are {{ORCHESTRATOR_NAME}}-owned or general-purpose — not backend work."
+    },
+
+    "🖥️ Frontend Developer": {
+      "patterns": [
+        "*.tsx",
+        "*.jsx",
+        "*.vue",
+        "*.svelte",
+        "**/components/**",
+        "**/pages/**",
+        "**/app/**/*.tsx",
+        "**/src/**/*.tsx",
+        "tailwind.config.*",
+        "postcss.config.*",
+        "next.config.*",
+        "vite.config.*"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Frontend Developer owns React/Next.js/Vue code, UI components, and client-side implementation."
+    },
+
+    "📱 Mobile Developer": {
+      "patterns": [
+        "*.swift",
+        "*.xib",
+        "*.storyboard",
+        "*.xcodeproj/**",
+        "*.xcworkspace/**",
+        "**/ios/**",
+        "**/android/**",
+        "*.kt",
+        "*.gradle",
+        "Podfile*",
+        "Info.plist"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Mobile Developer owns iOS and Android apps, Swift/Kotlin code, and mobile-specific configurations."
+    },
+
+    "💻 macOS Dev": {
+      "patterns": [
+        "**/macos/**/*.swift",
+        "*.entitlements",
+        "**/AppKit/**"
+      ],
+      "exclusions": [],
+      "reasoning_context": "macOS Dev owns desktop Mac applications using AppKit or SwiftUI for macOS."
+    },
+
+    "🤖 Automator": {
+      "patterns": [
+        "**/n8n/**",
+        "*.workflow",
+        "**/automations/**",
+        "**/shortcuts/**"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Automator owns n8n workflows, macOS shortcuts, and automation scripts."
+    },
+
+    "🛒 Ecomm Bro": {
+      "patterns": [
+        "**/shopify/**",
+        "*.liquid",
+        "**/themes/**/*.json"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Ecomm Bro owns e-commerce implementations, Liquid templates, and Shopify configurations."
+    },
+
+    "🏄🏼‍♂️ MCP Server Dude": {
+      "patterns": [
+        "**/mcp/**/*.ts",
+        "**/mcp-server/**",
+        "**/tools/*-mcp/**"
+      ],
+      "exclusions": [],
+      "reasoning_context": "MCP Server Dude owns Model Context Protocol server implementations."
+    },
+
+    "⛓️ Blockchain Agent": {
+      "patterns": [
+        "*.sol",
+        "**/contracts/**",
+        "**/hardhat/**",
+        "**/foundry/**"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Blockchain Agent owns smart contracts, Solidity code, and Web3 integrations."
+    },
+
+    "🧠 2nd Brain Wizard": {
+      "patterns": [
+        "**/obsidian/**",
+        "**/vault/**",
+        "**/*.excalidraw.md"
+      ],
+      "exclusions": [],
+      "reasoning_context": "2nd Brain Wizard owns Obsidian vaults, PKM systems, and knowledge management."
+    },
+
+    "📐 UI Designer": {
+      "patterns": [],
+      "exclusions": [],
+      "reasoning_context": "UI Designer owns wireframes, prototypes, design systems, and UI/UX decisions. No code files - works at design level."
+    },
+
+    "🎨 Graphic Designer": {
+      "patterns": [
+        "**/brand/**",
+        "**/assets/images/**",
+        "*.svg",
+        "*.ai",
+        "*.psd"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Graphic Designer owns brand assets, logos, marketing graphics, and static visual assets."
+    },
+
+    "🔍 Research Agent": {
+      "patterns": [],
+      "exclusions": [],
+      "reasoning_context": "Research Agent handles competitive analysis, market research, and investigation tasks. No code files."
+    },
+
+    "🧐 Code Reviewer": {
+      "patterns": [],
+      "exclusions": [],
+      "reasoning_context": "Code Reviewer performs code quality analysis. Does not write code - only reviews."
+    },
+
+    "👾 Debugger": {
+      "patterns": [],
+      "exclusions": [],
+      "reasoning_context": "Debugger investigates issues and performs root cause analysis. May read code but fixes are delegated to implementation specialists."
+    },
+
+    "🧪 Validator": {
+      "patterns": [
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/tests/**",
+        "**/__tests__/**"
+      ],
+      "exclusions": [],
+      "reasoning_context": "Validator owns test files and test execution. Writes and runs tests."
+    }
+  },
+
+  "orchestrator_owned": {
+    "description": "Paths and patterns that {{ORCHESTRATOR_NAME}} is allowed to work on directly",
+    "paths": [
+      "CLAUDE.md",
+      ".claude-context/**",
+      ".claude/commands/**",
+      ".claude/settings*",
+      ".claude/agents/**",
+      ".claude/skills/**",
+      "global/governance/**",
+      "global/claude-config/**",
+      "tools/nav.py",
+      "tools/nav-capsule.sh",
+      "tools/events_logger.py",
+      "monitoring/**"
+    ]
+  },
+
+  "enforcement_config": {
+    "mode": "blocking",
+    "allow_override": true,
+    "override_requires": "explicit_acknowledgment",
+    "log_violations": true,
+    "violation_log_path": "/tmp/orchestration_violations.log",
+    "metrics_enabled": true,
+    "metrics_path": "/tmp/orchestration_metrics.json"
+  },
+
+  "reasoning_protocol": {
+    "description": "When file patterns don't match, use Claude's reasoning via the orchestration skill",
+    "invoke_skill_on_block": true,
+    "skill_name": "orchestration",
+    "reasoning_prompt_template": "Analyze this task and determine the appropriate specialist. Consider: 1) What type of work is this? 2) Which specialist's domain does it fall under? 3) Is this truly implementation work or coordination/strategy?"
+  }
+}

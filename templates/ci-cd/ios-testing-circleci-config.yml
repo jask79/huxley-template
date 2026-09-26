@@ -1,0 +1,193 @@
+# CircleCI - iOS Testing Pipeline
+# Place this file at: .circleci/config.yml
+
+version: 2.1
+
+orbs:
+  macos: circleci/macos@2
+
+parameters:
+  scheme:
+    type: string
+    default: "MyApp"
+  bundle-id:
+    type: string
+    default: "com.example.MyApp"
+  simulator:
+    type: string
+    default: "iPhone 16"
+
+jobs:
+  build:
+    macos:
+      xcode: 15.0.0
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "Gemfile.lock" }}
+            - v1-dependencies-
+
+      - run:
+          name: Install Dependencies
+          command: |
+            pip3 install Pillow numpy
+            gem install json
+
+      - save_cache:
+          paths:
+            - ~/.cache/pip
+            - ~/.gem
+          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+
+      - run:
+          name: Boot Simulator
+          command: |
+            xcrun simctl boot "<< pipeline.parameters.simulator >>" || true
+            sleep 10
+
+      - run:
+          name: Build App
+          command: |
+            xcodebuild build \
+              -scheme << pipeline.parameters.scheme >> \
+              -destination 'platform=iOS Simulator,name=<< pipeline.parameters.simulator >>' \
+              -configuration Debug
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - build
+
+  test-minimal:
+    macos:
+      xcode: 15.0.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Run Minimal Tests
+          command: |
+            cd testing
+            ./scripts/run-matrix-tests.sh minimal
+
+      - store_artifacts:
+          path: testing/test-results
+          destination: test-results
+
+      - store_test_results:
+          path: testing/test-results
+
+  test-comprehensive:
+    macos:
+      xcode: 15.0.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Run Comprehensive Tests
+          command: |
+            cd testing
+            ./scripts/run-comprehensive-pipeline.sh
+
+      - store_artifacts:
+          path: testing/test-results
+          destination: test-results
+
+  visual-regression:
+    macos:
+      xcode: 15.0.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Visual Regression Testing
+          command: |
+            cd testing
+            if [ -d baseline-screenshots ] && [ -n "$(ls -A baseline-screenshots)" ]; then
+              ./scripts/run-visual-diff.sh
+            else
+              echo "⚠️  No baseline screenshots - skipping"
+            fi
+
+      - run:
+          name: Check for Regressions
+          command: |
+            cd testing
+            if [ -f test-results/visual-diff-*/diff-results.json ]; then
+              DIFF_COUNT=$(cat test-results/visual-diff-*/diff-results.json | jq '.different')
+              if [ "$DIFF_COUNT" -gt 0 ]; then
+                echo "❌ $DIFF_COUNT visual regressions detected"
+                exit 1
+              fi
+            fi
+
+      - store_artifacts:
+          path: testing/test-results/visual-diff-*
+          destination: visual-diff
+
+  network-analysis:
+    macos:
+      xcode: 15.0.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Analyze Network Logs
+          command: |
+            cd testing
+            ./scripts/analyze-network.sh || true
+
+      - store_artifacts:
+          path: testing/test-results/network-*.html
+          destination: network-analysis
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - build
+
+      - test-minimal:
+          requires:
+            - build
+
+      - visual-regression:
+          requires:
+            - test-minimal
+
+      - network-analysis:
+          requires:
+            - test-minimal
+
+      - test-comprehensive:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - build
+      - test-comprehensive:
+          requires:
+            - build

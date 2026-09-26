@@ -1,0 +1,55 @@
+{
+  "name": "useTrail",
+  "signature": "useTrail(count: number, config: SpringConfig): SpringValues[]",
+  "description": "Creates multiple springs with a single config, each spring will follow the previous one (stagger effect)",
+  "parameters": [
+    {
+      "name": "count",
+      "type": "number",
+      "description": "Number of springs to create"
+    },
+    {
+      "name": "config",
+      "type": "SpringConfig | () => SpringConfig",
+      "description": "Spring configuration applied to all springs",
+      "properties": [
+        {
+          "name": "from",
+          "type": "object",
+          "description": "Initial values for all springs"
+        },
+        {
+          "name": "to",
+          "type": "object",
+          "description": "Target values for all springs"
+        },
+        {
+          "name": "config",
+          "type": "SpringConfig",
+          "description": "Spring physics configuration"
+        }
+      ]
+    }
+  ],
+  "returns": {
+    "type": "SpringValues[]",
+    "description": "Array of animated values, one for each spring"
+  },
+  "examples": [
+    {
+      "title": "Stagger list items",
+      "code": "const items = ['Item 1', 'Item 2', 'Item 3']\nconst trail = useTrail(items.length, {\n  from: { opacity: 0, x: -20 },\n  to: { opacity: 1, x: 0 }\n})\n\nreturn trail.map((style, i) => (\n  <animated.div key={i} style={style}>\n    {items[i]}\n  </animated.div>\n))"
+    },
+    {
+      "title": "Toggle stagger",
+      "code": "const [open, setOpen] = useState(false)\nconst trail = useTrail(3, {\n  opacity: open ? 1 : 0,\n  transform: open ? 'translateY(0)' : 'translateY(-20px)'\n})"
+    }
+  ],
+  "commonPatterns": [
+    "List animations",
+    "Sequential reveals",
+    "Menu items",
+    "Card grids"
+  ],
+  "relatedHooks": ["useSpring", "useTransition", "useSprings"]
+}

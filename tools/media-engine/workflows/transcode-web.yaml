@@ -1,0 +1,43 @@
+name: Transcode Web
+media_type: video
+model: local
+auth: local
+auth_provider: local
+profile: fast-draft
+
+# Web-optimized transcoding: H.264, 1080p, 5Mbps ceiling, CRF 23
+# Uses PyAV (FFmpeg) locally — no API calls, no cost.
+
+generation:
+  resolution: 1080p
+  aspect_ratios:
+    - "16:9"
+    - "9:16"
+  fps: 30
+
+transcode:
+  codec: h264
+  audio_codec: aac
+  crf: 23
+  preset: medium
+  bitrate: "5M"
+
+refinement:
+  mode: autonomous
+  max_iterations: 1
+  quality_threshold: 0.90
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - not_corrupted
+
+output:
+  directory: "generated-media/{date}/transcoded/"
+  naming: "{workflow}-{sequence}-web"
+  formats:
+    - mp4
+
+provenance:
+  enabled: true
+  log_eval_scores: false
+  snapshot_config: true

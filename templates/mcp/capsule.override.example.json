@@ -1,0 +1,7 @@
+{
+  "mcp_overrides": {
+    "GitHub Huxley MCP": { "enabled": true },
+    "External Docs via GitMCP": { "enabled": true }
+  }
+}
+

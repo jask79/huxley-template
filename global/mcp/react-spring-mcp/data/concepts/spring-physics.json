@@ -1,0 +1,68 @@
+{
+  "name": "spring-physics",
+  "title": "Understanding Spring Physics in React-Spring",
+  "description": "React-spring simulates real spring-damper physics to create natural, responsive animations. Understanding the underlying physics helps you tune animations intuitively.",
+  "sections": [
+    {
+      "title": "Why Spring Physics?",
+      "content": "Traditional time-based animations (CSS transitions, duration-based) use easing curves over fixed time. Springs are fundamentally different: they simulate physical forces, creating motion that feels natural and responds dynamically to interruptions.\n\n**Time-based**: 'Move from A to B in 500ms using easeOutQuad'\n**Spring-based**: 'Apply tension force toward B, with friction resistance'\n\nSprings automatically adapt when interrupted mid-animation, creating fluid, responsive UI that feels alive."
+    },
+    {
+      "title": "Core Physics Equation",
+      "content": "React-spring uses the classic spring-damper equation:\n\nF = -kx - cv\n\nWhere:\n- F = Total force on the spring\n- k = Spring constant (tension)\n- x = Displacement from target\n- c = Damping coefficient (friction)\n- v = Current velocity\n\nThis creates a force that:\n1. Pulls toward the target (proportional to distance)\n2. Resists motion (proportional to velocity)\n3. Results in natural acceleration and deceleration"
+    },
+    {
+      "title": "The Three Key Parameters",
+      "content": "**1. MASS (m)** - Inertia\n- Default: 1\n- Higher mass = slower acceleration, more momentum\n- Think: Animating a feather (m=0.5) vs. a boulder (m=5)\n- Use Cases: Heavy mass for dramatic, weighty motion\n\n**2. TENSION (k)** - Spring Stiffness\n- Default: 170\n- Higher tension = faster oscillations, snappier motion\n- Think: Tight rubber band (k=300) vs. loose spring (k=50)\n- Use Cases: High tension for quick feedback (buttons), low tension for gentle motion\n\n**3. FRICTION (c)** - Damping Force\n- Default: 26\n- Higher friction = less bounce, faster settling\n- Think: Moving through air (c=20) vs. honey (c=100)\n- Use Cases: Low friction for playful bounce, high friction for smooth stop"
+    },
+    {
+      "title": "Damping Ratio (Alternative to Friction)",
+      "content": "The damping ratio (ζ) is a normalized way to describe oscillation behavior:\n\n**ζ < 1: Underdamped (Bouncy)**\n- Spring overshoots target and oscillates\n- ζ = 0: No damping, infinite oscillation\n- ζ = 0.5: Noticeable bounce, fun and playful\n- Use: Playful interactions, attention-grabbing animations\n\n**ζ = 1: Critically Damped (Perfect)**\n- Fastest approach to target without overshoot\n- No oscillation, smooth stop\n- Use: Professional UIs, precise motion\n\n**ζ > 1: Overdamped (Sluggish)**\n- Slower than critical damping\n- No overshoot, very smooth\n- Use: Dramatic slow motion, special effects\n\n**Relationship**: damping = 1 produces ζ = 1 (critical damping)"
+    },
+    {
+      "title": "Frequency (Alternative to Tension)",
+      "content": "Frequency (in Hz) describes oscillations per second:\n\n- frequency = 0.5 → One oscillation every 2 seconds (slow)\n- frequency = 1 → One oscillation per second (moderate)\n- frequency = 2 → Two oscillations per second (fast)\n\n**Why use frequency instead of tension?**\nFrequency is more intuitive. \"I want 2 bounces per second\" is clearer than \"tension should be 157.9\".\n\n**Frequency + Damping = Intuitive Control**\n```javascript\nconfig: {\n  frequency: 1.5,  // 1.5 oscillations/second\n  damping: 0.6,    // Some bounce (underdamped)\n}\n```\n\nThis is often easier to tune than mass/tension/friction."
+    },
+    {
+      "title": "Tuning Strategy",
+      "content": "**Start with Presets:**\n1. config.default - General purpose\n2. config.stiff - Fast feedback\n3. config.gentle - Smooth, elegant\n4. config.wobbly - Playful bounce\n\n**For Custom Tuning:**\n\n**Option A: Tension + Friction (Traditional)**\n1. Start: tension=170, friction=26\n2. Want faster? Increase tension to 250\n3. Want less bounce? Increase friction to 40\n4. Want more bounce? Decrease friction to 15\n\n**Option B: Frequency + Damping (Intuitive)**\n1. Start: frequency=1, damping=1 (no bounce)\n2. Want faster? Increase frequency to 2\n3. Want bounce? Decrease damping to 0.5\n4. Want more bounce? Decrease damping to 0.3\n\n**Quick Tuning Tips:**\n- Too slow → Increase tension or frequency\n- Too bouncy → Increase friction or damping\n- Too stiff → Decrease tension or frequency\n- Too dead → Decrease friction or damping\n- Feels heavy → Increase mass\n- Feels floaty → Decrease mass"
+    },
+    {
+      "title": "Spring vs. Duration-Based",
+      "content": "**When to Use Springs (Default):**\n✅ Interactive UI (buttons, toggles, gestures)\n✅ Responsive to user input\n✅ Natural, organic feel\n✅ Animations that can be interrupted\n✅ No precise timing required\n\n**When to Use Duration-Based:**\n✅ Choreographed sequences\n✅ Matching design specs with exact timing\n✅ Synchronized with audio/video\n✅ Predictable, repeatable motion\n✅ Simple linear/eased motion\n\n**Key Difference:**\nSprings adapt dynamically. If a user clicks a button mid-animation, the spring adjusts naturally. Duration-based animations must restart or jump, feeling less responsive."
+    },
+    {
+      "title": "Advanced: Decay Animations",
+      "content": "Decay animations simulate natural deceleration (like friction/drag):\n\n```javascript\nconfig: {\n  decay: true,\n  velocity: initialVelocity  // From gesture\n}\n```\n\n**Physics:**\n- No target value\n- Velocity exponentially decreases\n- Eventually stops due to 'friction'\n\n**Use Cases:**\n- Fling gestures (swipe to scroll)\n- Momentum scrolling\n- Throwing objects\n- Natural deceleration after user input\n\n**Example:**\nUser swipes with velocity 500px/s → Spring continues moving in that direction, gradually slowing down until it stops."
+    },
+    {
+      "title": "Common Pitfalls",
+      "content": "**1. Overshoot Beyond Bounds**\nProblem: Spring bounces outside UI bounds\nSolution: Use clamp: true or increase friction\n\n**2. Oscillation Never Stops**\nProblem: Animation runs forever\nSolution: Increase friction or use precision: 1 for faster termination\n\n**3. Animation Too Slow**\nProblem: Takes seconds to complete\nSolution: Increase tension/frequency or decrease friction/damping\n\n**4. No Animation Happens**\nProblem: With useSpringRef, config changes don't trigger animation\nSolution: Explicitly call api.start() - declarative updates ignored with refs\n\n**5. Jittery Motion**\nProblem: Animation looks choppy\nSolution: Decrease mass, ensure 60fps (check performance), use round for sub-pixel"
+    },
+    {
+      "title": "Physics Cheat Sheet",
+      "content": "**Want Faster Motion:**\n- ↑ Tension (tighter spring)\n- ↑ Frequency (more oscillations/second)\n\n**Want Slower Motion:**\n- ↓ Tension (looser spring)\n- ↓ Frequency\n- ↑ Mass (heavier object)\n\n**Want More Bounce:**\n- ↓ Friction (less resistance)\n- ↓ Damping (underdamped < 1)\n\n**Want Less Bounce:**\n- ↑ Friction (more resistance)\n- ↑ Damping (critically damped = 1)\n\n**Want No Overshoot:**\n- damping: 1 (critically damped)\n- clamp: true (force stop at target)\n\n**Want Dramatic Motion:**\n- ↑ Mass (heavy, momentum)\n- ↓ Friction (less resistance)\n\n**Want Snappy Feedback:**\n- config.stiff preset\n- High tension + moderate friction\n\n**Want Smooth, Elegant:**\n- config.gentle preset\n- Moderate tension + low friction"
+    }
+  ],
+  "examples": [
+    {
+      "title": "Comparing approaches",
+      "code": "// Spring-based (natural, responsive)\nconst spring = useSpring({\n  x: isOpen ? 100 : 0,\n  config: { tension: 170, friction: 26 }\n})\n\n// Duration-based (precise timing)\nconst duration = useSpring({\n  x: isOpen ? 100 : 0,\n  config: { duration: 300, easing: easings.easeOutQuad }\n})\n\n// Try clicking rapidly:\n// Spring: Smoothly reverses mid-animation\n// Duration: Feels abrupt or jumpy"
+    },
+    {
+      "title": "Tuning workflow",
+      "code": "// 1. Start with preset\nconst springs = useSpring({\n  x: 100,\n  config: config.default\n})\n\n// 2. Too slow? Make it snappier\nconfig: config.stiff  // Faster\n\n// 3. Too bouncy? Add friction\nconfig: { ...config.stiff, friction: 30 }\n\n// 4. Still not right? Use frequency/damping\nconfig: {\n  frequency: 2,    // 2 bounces/second\n  damping: 0.7     // Slight bounce\n}"
+    },
+    {
+      "title": "Physics-based thinking",
+      "code": "// Think: \"I want a heavy drawer that slides smoothly\"\nconst drawer = useSpring({\n  x: isOpen ? 300 : 0,\n  config: {\n    mass: 3,        // Heavy (weighty feel)\n    tension: 200,   // Moderate speed\n    friction: 40,   // Smooth stop, no bounce\n  }\n})\n\n// Think: \"I want a bouncy button that responds quickly\"\nconst button = useSpring({\n  scale: isPressed ? 0.95 : 1,\n  config: {\n    mass: 0.5,      // Light (snappy feel)\n    tension: 300,   // Very fast\n    friction: 10,   // Let it bounce\n  }\n})"
+    }
+  ],
+  "relatedHooks": ["useSpring", "useTrail", "useTransition", "config"],
+  "furtherReading": [
+    "Hooke's Law: F = -kx (spring force)",
+    "Damped harmonic oscillator",
+    "Critical damping coefficient",
+    "Natural frequency and resonance"
+  ]
+}

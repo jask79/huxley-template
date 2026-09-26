@@ -1,0 +1,49 @@
+name: Video Edit Basic
+media_type: video-edit
+profile: high-fidelity
+
+generation:
+  resolution: 1080p
+  aspect_ratios:
+    - "16:9"
+  fps: 24
+
+timeline:
+  transition_type: dissolve
+  transition_duration: 1.0
+  export_formats:
+    - otio
+    - fcpxml
+    - edl
+
+render:
+  enabled: true
+  codec: h264
+  bitrate: "8M"
+  format: mp4
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 3
+  quality_threshold: 0.80
+  evaluate_criteria:
+    - edit_pacing
+    - transition_smoothness
+    - overall_quality
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - not_corrupted
+
+output:
+  directory: "generated-media/{date}/video-edit/"
+  naming: "{workflow}-{sequence}"
+  formats:
+    - otio
+    - fcpxml
+    - edl
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

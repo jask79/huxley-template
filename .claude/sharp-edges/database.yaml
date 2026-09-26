@@ -1,0 +1,258 @@
+# Database Sharp Edges
+# Production gotchas for PostgreSQL, Supabase, and data management
+
+edges:
+  # === CRITICAL: Data Integrity ===
+
+  - id: missing_foreign_key
+    severity: warning
+    category: correctness
+    pattern: "Reference column without foreign key constraint"
+    detection:
+      - type: regex
+        value: '\w+_id\s+(?:int|uuid|bigint)(?!\s*REFERENCES)'
+        files: ["*.sql"]
+    why: "Without FK, orphaned records and data inconsistency occur"
+    fix: "Add REFERENCES constraint with appropriate ON DELETE action"
+    examples:
+      bad: |
+        CREATE TABLE orders (
+            user_id uuid NOT NULL
+        );
+      good: |
+        CREATE TABLE orders (
+            user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE
+        );
+    tags: ["constraints", "referential-integrity"]
+
+  - id: missing_not_null
+    severity: warning
+    category: correctness
+    pattern: "Required field without NOT NULL constraint"
+    detection:
+      - type: semantic
+        description: "Column that should never be null lacks NOT NULL constraint"
+    why: "NULLs in required fields cause application errors"
+    fix: "Add NOT NULL constraint and provide default or migration"
+    tags: ["constraints", "null-safety"]
+
+  - id: text_without_check
+    severity: info
+    category: correctness
+    pattern: "Text field without length or format check"
+    detection:
+      - type: regex
+        value: '\w+\s+(?:text|varchar)(?!\s*\(\d+\)|.*CHECK)'
+        files: ["*.sql"]
+    why: "Unbounded text can cause storage and performance issues"
+    fix: "Add CHECK constraint for length or use varchar(n)"
+    tags: ["validation", "constraints"]
+
+  # === CRITICAL: Performance ===
+
+  - id: missing_index_fk
+    severity: warning
+    category: performance
+    pattern: "Foreign key column without index"
+    detection:
+      - type: regex
+        value: 'REFERENCES\s+\w+\s*\(\w+\)(?!.*INDEX)'
+        files: ["*.sql"]
+    why: "FK joins without indexes cause full table scans"
+    fix: "Create index on foreign key columns"
+    examples:
+      bad: |
+        user_id uuid REFERENCES users(id)
+      good: |
+        user_id uuid REFERENCES users(id),
+        -- then:
+        CREATE INDEX idx_orders_user_id ON orders(user_id);
+    tags: ["index", "performance"]
+
+  - id: select_star
+    severity: warning
+    category: performance
+    pattern: "SELECT * in application code"
+    detection:
+      - type: regex
+        value: 'SELECT\s+\*\s+FROM'
+        files: ["*.sql", "*.py", "*.ts", "*.js"]
+    why: "SELECT * fetches unnecessary columns, wastes bandwidth"
+    fix: "Explicitly list required columns"
+    examples:
+      bad: |
+        SELECT * FROM users WHERE id = $1
+      good: |
+        SELECT id, name, email FROM users WHERE id = $1
+    tags: ["performance", "queries"]
+
+  - id: missing_limit_offset
+    severity: warning
+    category: performance
+    pattern: "Pagination without covering index"
+    detection:
+      - type: regex
+        value: 'OFFSET\s+\d+(?!.*(?:cursor|keyset))'
+        files: ["*.sql"]
+    why: "OFFSET-based pagination degrades at scale"
+    fix: "Use cursor/keyset pagination for large datasets"
+    examples:
+      bad: |
+        SELECT * FROM posts ORDER BY created_at LIMIT 20 OFFSET 10000
+      good: |
+        SELECT * FROM posts
+        WHERE created_at < $cursor
+        ORDER BY created_at DESC
+        LIMIT 20
+    tags: ["pagination", "performance"]
+
+  - id: missing_partial_index
+    severity: info
+    category: performance
+    pattern: "Boolean column query without partial index"
+    detection:
+      - type: regex
+        value: 'WHERE\s+\w+\s*=\s*(?:true|false|TRUE|FALSE)'
+        files: ["*.sql"]
+    why: "Full index on boolean wastes space, partial index is more efficient"
+    fix: "Create partial index for the common query case"
+    examples:
+      bad: |
+        CREATE INDEX idx_active ON users(is_active);
+      good: |
+        CREATE INDEX idx_active_users ON users(id) WHERE is_active = true;
+    tags: ["index", "optimization"]
+
+  # === WARNING: Migrations ===
+
+  - id: destructive_migration
+    severity: critical
+    category: reliability
+    pattern: "Irreversible migration without backup"
+    detection:
+      - type: regex
+        value: 'DROP\s+(?:TABLE|COLUMN|INDEX)|ALTER.*DROP|TRUNCATE'
+        files: ["*.sql"]
+    why: "Destructive operations can't be rolled back without backup"
+    fix: "Backup before destructive migrations, use soft deletes"
+    tags: ["migrations", "backup"]
+
+  - id: migration_locks_table
+    severity: warning
+    category: reliability
+    pattern: "Migration that acquires exclusive lock on large table"
+    detection:
+      - type: regex
+        value: 'ALTER\s+TABLE\s+\w+\s+ADD\s+COLUMN\s+\w+\s+\w+\s+(?:NOT\s+NULL|DEFAULT)'
+        files: ["*.sql"]
+    why: "Adding NOT NULL or DEFAULT locks table for rewrite"
+    fix: "Add column nullable first, backfill, then add constraint"
+    examples:
+      bad: |
+        ALTER TABLE users ADD COLUMN status text NOT NULL DEFAULT 'active';
+      good: |
+        ALTER TABLE users ADD COLUMN status text;
+        UPDATE users SET status = 'active' WHERE status IS NULL;
+        ALTER TABLE users ALTER COLUMN status SET NOT NULL;
+    tags: ["migrations", "locks"]
+
+  # === WARNING: Supabase-Specific ===
+
+  - id: rls_bypass_service_role
+    severity: warning
+    category: security
+    pattern: "Using service role key in client-side code"
+    detection:
+      - type: regex
+        value: 'service_role|SUPABASE_SERVICE_ROLE'
+        files: ["*.tsx", "*.jsx", "*.ts", "*.js"]
+    why: "Service role bypasses RLS, exposing all data if leaked"
+    fix: "Use anon key client-side, service role only server-side"
+    tags: ["supabase", "rls"]
+
+  - id: rls_auth_uid_missing
+    severity: critical
+    category: security
+    pattern: "RLS policy without auth.uid() check"
+    detection:
+      - type: regex
+        value: 'CREATE\s+POLICY.*(?:SELECT|INSERT|UPDATE|DELETE).*USING\s*\((?!.*auth\.uid)'
+        files: ["*.sql"]
+    why: "Policy without auth check may allow unauthorized access"
+    fix: "Include auth.uid() comparison in RLS policies"
+    examples:
+      bad: |
+        CREATE POLICY "select" ON orders FOR SELECT USING (true);
+      good: |
+        CREATE POLICY "select" ON orders FOR SELECT
+        USING (auth.uid() = user_id);
+    tags: ["supabase", "rls"]
+
+  - id: realtime_without_filter
+    severity: warning
+    category: performance
+    pattern: "Supabase realtime subscription without filter"
+    detection:
+      - type: regex
+        value: '\.channel\([^)]*\)\.on\s*\([^)]*postgres_changes[^)]*\{[^}]*(?!filter)'
+        files: ["*.ts", "*.js"]
+    why: "Unfiltered subscriptions receive all table changes"
+    fix: "Add filter to reduce unnecessary updates"
+    examples:
+      bad: |
+        channel.on('postgres_changes', { event: '*', table: 'messages' })
+      good: |
+        channel.on('postgres_changes', {
+          event: '*',
+          table: 'messages',
+          filter: `room_id=eq.${roomId}`
+        })
+    tags: ["supabase", "realtime"]
+
+  # === INFO: Best Practices ===
+
+  - id: timestamp_without_timezone
+    severity: info
+    category: correctness
+    pattern: "Timestamp column without timezone"
+    detection:
+      - type: regex
+        value: 'timestamp\s+(?:NOT\s+NULL\s+)?(?:DEFAULT|$)'
+        files: ["*.sql"]
+    why: "Timestamps without timezone cause confusion across timezones"
+    fix: "Use timestamptz (timestamp with time zone)"
+    examples:
+      bad: |
+        created_at timestamp NOT NULL DEFAULT now()
+      good: |
+        created_at timestamptz NOT NULL DEFAULT now()
+    tags: ["timestamps", "timezone"]
+
+  - id: uuid_as_pk
+    severity: info
+    category: performance
+    pattern: "UUID primary key consideration"
+    detection:
+      - type: semantic
+        description: "UUID used as primary key in high-write table"
+    why: "Random UUIDs cause index fragmentation; consider uuid_generate_v7()"
+    fix: "Use uuid_generate_v7() for time-ordered UUIDs, or bigserial for internal tables"
+    tags: ["uuid", "primary-key"]
+
+  - id: enum_as_text
+    severity: info
+    category: maintainability
+    pattern: "Status/type field as plain text instead of enum"
+    detection:
+      - type: regex
+        value: '(?:status|type|state|role)\s+text'
+        files: ["*.sql"]
+    why: "Text fields allow invalid values, enums enforce valid states"
+    fix: "Use PostgreSQL enum type or CHECK constraint"
+    examples:
+      bad: |
+        status text NOT NULL
+      good: |
+        status order_status NOT NULL
+        -- where: CREATE TYPE order_status AS ENUM ('pending', 'shipped', 'delivered');
+    tags: ["enums", "validation"]

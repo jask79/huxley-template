@@ -1,0 +1,42 @@
+name: Marketing Hero
+media_type: image
+model: google/gemini-3-pro-image-preview
+profile: high-fidelity
+
+generation:
+  resolution: 4K
+  aspect_ratios:
+    - "16:9"
+    - "3:2"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 4
+  quality_threshold: 0.85
+  evaluate_criteria:
+    - visual_impact
+    - brand_alignment
+    - text_legibility
+    - composition
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - resolution_match
+    - not_corrupted
+
+consistency:
+  reference_images: 6
+  style_weight: 0.8
+  character_lock: false
+
+output:
+  directory: "generated-media/{date}/"
+  naming: "{workflow}-{sequence}-{resolution}"
+  formats:
+    - png
+    - webp
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

@@ -1,0 +1,166 @@
+{
+  "id": "",
+  "display_name": "",
+  "type": "ecommerce-campaign",
+  "area": "ecommerce",
+  "description": "Marketing campaign capsule for e-commerce brand promotion",
+  "owners": ["{{USER_LOGIN}}"],
+  "created_at": "",
+  "version": "1.0.0",
+  
+  "campaign_config": {
+    "brand_id": "",
+    "campaign_type": "product_launch",
+    "status": "planning",
+    "start_date": "",
+    "end_date": "",
+    "budget": {
+      "total_budget": 0,
+      "daily_budget": 0,
+      "currency": "USD"
+    },
+    "objectives": {
+      "primary": "awareness",
+      "secondary": ["traffic", "conversions"],
+      "kpi_targets": {
+        "impressions": 100000,
+        "clicks": 5000,
+        "conversions": 100,
+        "roas": 3.0
+      }
+    }
+  },
+  
+  "platforms": {
+    "amazon": {
+      "enabled": false,
+      "campaign_types": ["sponsored_products", "sponsored_brands", "sponsored_display"],
+      "budget_allocation": 0.5,
+      "targeting": {
+        "keywords": [],
+        "audiences": [],
+        "competitors": []
+      }
+    },
+    "google_ads": {
+      "enabled": false,
+      "campaign_types": ["search", "shopping", "display"],
+      "budget_allocation": 0.3,
+      "targeting": {
+        "keywords": [],
+        "demographics": {},
+        "geographic": []
+      }
+    },
+    "facebook": {
+      "enabled": false,
+      "campaign_types": ["awareness", "traffic", "conversions"],
+      "budget_allocation": 0.2,
+      "targeting": {
+        "interests": [],
+        "behaviors": [],
+        "demographics": {}
+      }
+    }
+  },
+  
+  "creative_strategy": {
+    "messaging": {
+      "primary_message": "",
+      "value_proposition": "",
+      "call_to_action": ""
+    },
+    "visual_approach": {
+      "style": "",
+      "color_scheme": "",
+      "imagery_type": "lifestyle"
+    },
+    "content_variations": {
+      "headlines": [],
+      "descriptions": [],
+      "ctas": []
+    }
+  },
+  
+  "targeting_strategy": {
+    "primary_audience": {
+      "demographics": {},
+      "interests": [],
+      "behaviors": []
+    },
+    "secondary_audiences": [],
+    "exclusions": [],
+    "lookalike_sources": []
+  },
+  
+  "performance_tracking": {
+    "metrics": {
+      "awareness": ["impressions", "reach", "frequency"],
+      "engagement": ["clicks", "ctr", "video_views"],
+      "conversion": ["purchases", "add_to_cart", "cost_per_acquisition"]
+    },
+    "attribution_window": "7_day_click",
+    "reporting_frequency": "daily"
+  },
+  
+  "optimization": {
+    "auto_optimization": false,
+    "bid_strategy": "maximize_conversions",
+    "optimization_goals": ["reduce_cpa", "increase_roas"],
+    "testing_strategy": {
+      "a_b_tests": [],
+      "multivariate_tests": []
+    }
+  },
+  
+  "timeline": {
+    "planning_phase": {
+      "duration_days": 7,
+      "deliverables": ["strategy", "creative", "targeting"]
+    },
+    "setup_phase": {
+      "duration_days": 3,
+      "deliverables": ["campaigns", "tracking", "approval"]
+    },
+    "execution_phase": {
+      "duration_days": 30,
+      "deliverables": ["launch", "monitoring", "optimization"]
+    },
+    "analysis_phase": {
+      "duration_days": 5,
+      "deliverables": ["performance_report", "insights", "recommendations"]
+    }
+  },
+  
+  "risk_management": {
+    "budget_safeguards": {
+      "daily_spend_limit": true,
+      "performance_thresholds": {
+        "max_cpa": 50,
+        "min_roas": 2.0
+      }
+    },
+    "brand_safety": {
+      "content_restrictions": true,
+      "placement_exclusions": [],
+      "monitoring": true
+    }
+  },
+  
+  "deliverables": {
+    "creative_assets": [],
+    "campaign_setups": [],
+    "tracking_implementation": [],
+    "performance_reports": []
+  },
+  
+  "stakeholders": {
+    "campaign_manager": "{{USER_LOGIN}}",
+    "creative_team": [],
+    "analysts": [],
+    "approvers": ["{{USER_LOGIN}}"]
+  },
+  
+  "tags": ["ecommerce", "campaign"],
+  "lane": "standard"
+}

@@ -1,0 +1,50 @@
+name: Character Series
+media_type: image
+model: google/gemini-3-pro-image-preview
+auth: openrouter
+auth_provider: openrouter
+profile: high-fidelity
+
+generation:
+  resolution: 4K
+  aspect_ratios:
+    - "1:1"
+    - "3:4"
+    - "16:9"
+
+refinement:
+  mode: agent_in_loop
+  max_iterations: 7
+  quality_threshold: 0.90
+  regression_cutoff: true
+  evaluate_criteria:
+    - character_consistency
+    - pose_accuracy
+    - facial_features
+    - clothing_accuracy
+    - style_coherence
+    - lighting_consistency
+  hard_checks:
+    - file_exists
+    - file_not_empty
+    - resolution_match
+
+consistency:
+  reference_images: 10
+  style_weight: 0.9
+  character_lock: true
+
+variants:
+  count: 3
+  variation_strength: 0.15
+
+output:
+  directory: "generated-media/{capsule}/{date}/characters/"
+  naming: "{workflow}-{sequence}-{resolution}"
+  formats:
+    - png
+
+provenance:
+  enabled: true
+  log_eval_scores: true
+  snapshot_config: true

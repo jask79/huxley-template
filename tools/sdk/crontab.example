@@ -1,0 +1,113 @@
+# SDK Workflow Crontab Configuration
+#
+# Install this crontab with:
+#   crontab -e
+#   # Then paste the desired entries below
+#
+# Or install the entire file:
+#   crontab {{CATALYST_ROOT}}/tools/sdk/crontab.example
+#
+# View current crontab:
+#   crontab -l
+#
+# Remove crontab:
+#   crontab -r
+
+# Environment variables for cron jobs
+SDK_WEBHOOK_URL=http://localhost:5000
+SDK_WEBHOOK_API_KEY=your-api-key-here
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+# ============================================================================
+# Daily Audit Workflow
+# ============================================================================
+# Runs every day at 9:10 AM
+# - Validates Huxley health
+# - Runs smoke tests
+# - Updates dashboard
+# - Sends notifications
+10 9 * * * {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/daily_audit_workflow.py >> {{CATALYST_ROOT}}/registry/cron/daily_audit_cron.log 2>&1
+
+# ============================================================================
+# Dashboard Refresh
+# ============================================================================
+# Refresh monitoring dashboard every 15 minutes during work hours (9 AM - 6 PM)
+*/15 9-18 * * * {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/generate_dashboard.py --timeout 60 >> {{CATALYST_ROOT}}/registry/cron/dashboard_cron.log 2>&1
+
+# ============================================================================
+# Hourly Health Check
+# ============================================================================
+# Light health check every hour
+# - Validates core systems
+# - Updates metrics
+# - Logs to webhook
+0 * * * * {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/health_check_workflow.py --timeout 120 >> {{CATALYST_ROOT}}/registry/cron/health_check_cron.log 2>&1
+
+# ============================================================================
+# Weekly Deep Analysis
+# ============================================================================
+# Comprehensive analysis every Sunday at 8 AM
+# - Pattern analysis
+# - Performance trends
+# - Capacity planning
+0 8 * * 0 {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/weekly_analysis_workflow.py --timeout 1800 >> {{CATALYST_ROOT}}/registry/cron/weekly_analysis_cron.log 2>&1
+
+# ============================================================================
+# Monthly Cleanup
+# ============================================================================
+# Log rotation and cleanup on the 1st of each month at 3 AM
+# - Archive old logs
+# - Clean temp files
+# - Database vacuum
+0 3 1 * * {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/monthly_cleanup_workflow.py --timeout 600 >> {{CATALYST_ROOT}}/registry/cron/monthly_cleanup_cron.log 2>&1
+
+# ============================================================================
+# On-Demand Test Execution (Disabled by default)
+# ============================================================================
+# Uncomment to enable hourly test runs
+# 0 * * * * {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py {{CATALYST_ROOT}}/tools/sdk/test_workflow.py --timeout 300 >> {{CATALYST_ROOT}}/registry/cron/test_cron.log 2>&1
+
+# ============================================================================
+# Notes
+# ============================================================================
+#
+# Cron Syntax:
+#   * * * * *  command
+#   │ │ │ │ │
+#   │ │ │ │ └─── Day of week (0-7, Sunday = 0 or 7)
+#   │ │ │ └───── Month (1-12)
+#   │ │ └─────── Day of month (1-31)
+#   │ └───────── Hour (0-23)
+#   └─────────── Minute (0-59)
+#
+# Special strings:
+#   @reboot    - Run once at startup
+#   @daily     - Run once a day (00:00)
+#   @hourly    - Run once an hour (00:00 of each hour)
+#   @weekly    - Run once a week (Sunday 00:00)
+#   @monthly   - Run once a month (1st 00:00)
+#
+# Examples:
+#   */5 * * * *        - Every 5 minutes
+#   0 */2 * * *        - Every 2 hours
+#   0 9-17 * * 1-5     - 9 AM to 5 PM, Monday-Friday
+#   0 0 * * *          - Midnight every day
+#   0 0 1 * *          - Midnight on 1st of month
+#   0 0 * * 0          - Midnight every Sunday
+#
+# Logging:
+#   >> /path/to/log 2>&1  - Redirect stdout and stderr to log file
+#   > /dev/null 2>&1      - Discard all output
+#
+# Environment:
+#   Set environment variables at the top of crontab
+#   Or use: */5 * * * * ENV_VAR=value command
+#
+# Testing:
+#   Run cron wrapper manually first:
+#     {{CATALYST_ROOT}}/tools/sdk/cron_wrapper.py --dry-run /path/to/workflow.py
+#
+# Monitoring:
+#   Check cron logs: tail -f {{CATALYST_ROOT}}/registry/cron/*.log
+#   View cron status: ps aux | grep cron
+#   Check mail for errors: mail

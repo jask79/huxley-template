@@ -1,0 +1,37 @@
+{
+  "name": "mesh-coordinator",
+  "version": "1.0.0",
+  "description": "MCP server for supervised mesh agent communication in Huxley",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mesh-coordinator": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "tsc && node dist/index.js",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "catalyst",
+    "agent-mesh",
+    "model-context-protocol"
+  ],
+  "author": "Huxley",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "better-sqlite3": "^11.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

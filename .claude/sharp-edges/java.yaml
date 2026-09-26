@@ -1,0 +1,234 @@
+# Java/Kotlin Sharp Edges
+# Production gotchas for JVM services, Spring Boot, and Android
+
+edges:
+  # === CRITICAL: Security ===
+
+  - id: sql_injection_java
+    severity: critical
+    category: security
+    pattern: "SQL query built with string concatenation"
+    detection:
+      - type: regex
+        value: '(?:createQuery|createNativeQuery|executeQuery|prepareStatement)\s*\([^)]*\+\s*\w+'
+        files: ["*.java", "*.kt"]
+    why: "String concatenation in SQL allows injection attacks"
+    fix: "Use parameterized queries, JPA named parameters, or Spring Data"
+    examples:
+      bad: |
+        String sql = "SELECT * FROM users WHERE id = " + userId;
+        stmt.executeQuery(sql);
+      good: |
+        PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
+        ps.setLong(1, userId);
+    tags: ["owasp-top-10", "injection"]
+
+  - id: insecure_deserialization_java
+    severity: critical
+    category: security
+    pattern: "Deserializing untrusted input with ObjectInputStream"
+    detection:
+      - type: regex
+        value: 'ObjectInputStream|readObject\(\)|XMLDecoder'
+        files: ["*.java", "*.kt"]
+    why: "Java deserialization of untrusted data enables remote code execution"
+    fix: "Use JSON (Jackson/Gson), validate types, or use serialization filters (JEP 290)"
+    tags: ["owasp-top-10", "rce"]
+
+  - id: hardcoded_credentials_java
+    severity: critical
+    category: security
+    pattern: "Hardcoded password or secret in Java/Kotlin source"
+    detection:
+      - type: regex
+        value: '(?:password|secret|apiKey|token)\s*=\s*"[^"]{8,}"'
+        files: ["*.java", "*.kt"]
+    why: "Credentials in source code get committed and decompiled from JARs"
+    fix: "Use environment variables, Spring Vault, or secrets manager"
+    tags: ["secrets", "credentials"]
+
+  # === CRITICAL: Null Safety ===
+
+  - id: null_pointer_risk
+    severity: critical
+    category: correctness
+    pattern: "Potential NullPointerException"
+    detection:
+      - type: semantic
+        description: "Method return value used without null check where the method can return null (Collections, Map.get, Optional.get without isPresent)"
+    why: "NullPointerException is the #1 runtime exception in Java"
+    fix: "Use Optional, @Nullable annotations, or null checks"
+    examples:
+      bad: |
+        String name = map.get("user").toUpperCase();
+      good: |
+        String name = Optional.ofNullable(map.get("user"))
+            .map(String::toUpperCase)
+            .orElse("unknown");
+    tags: ["null-safety", "npe"]
+
+  - id: optional_get_without_check
+    severity: warning
+    category: correctness
+    pattern: "Optional.get() without isPresent/orElse"
+    detection:
+      - type: regex
+        value: '\.get\(\)(?!\s*\.)(?![\s\S]*\.isPresent)'
+        files: ["*.java"]
+    why: "Optional.get() throws NoSuchElementException if empty"
+    fix: "Use orElse, orElseGet, orElseThrow, or ifPresent"
+    tags: ["optional", "null-safety"]
+
+  # === WARNING: Resource Management ===
+
+  - id: resource_leak_java
+    severity: warning
+    category: reliability
+    pattern: "AutoCloseable resource not in try-with-resources"
+    detection:
+      - type: semantic
+        description: "InputStream, OutputStream, Connection, Statement, or other AutoCloseable created outside a try-with-resources block"
+    why: "Resources not closed in finally/TWR leak file handles and connections"
+    fix: "Use try-with-resources for all AutoCloseable resources"
+    examples:
+      bad: |
+        InputStream is = new FileInputStream(file);
+        byte[] data = is.readAllBytes();
+      good: |
+        try (InputStream is = new FileInputStream(file)) {
+            byte[] data = is.readAllBytes();
+        }
+    tags: ["resource-leak", "try-with-resources"]
+
+  - id: connection_pool_exhaustion
+    severity: warning
+    category: reliability
+    pattern: "Database connection not returned to pool"
+    detection:
+      - type: semantic
+        description: "DataSource.getConnection() without try-with-resources or explicit close in finally block"
+    why: "Unreturned connections exhaust pool, causing timeouts for all requests"
+    fix: "Always use try-with-resources for connections"
+    tags: ["database", "connection-pool"]
+
+  # === WARNING: Concurrency ===
+
+  - id: synchronized_on_mutable
+    severity: warning
+    category: correctness
+    pattern: "Synchronized on mutable field"
+    detection:
+      - type: regex
+        value: 'synchronized\s*\(\s*(?!this|\.class)\w+\s*\)'
+        files: ["*.java"]
+    why: "If the reference changes, threads synchronize on different objects"
+    fix: "Synchronize on a dedicated final lock object"
+    examples:
+      bad: |
+        synchronized(list) { list.add(item); }
+      good: |
+        private final Object lock = new Object();
+        synchronized(lock) { list.add(item); }
+    tags: ["concurrency", "synchronization"]
+
+  - id: shared_mutable_state
+    severity: warning
+    category: correctness
+    pattern: "Non-volatile, non-synchronized shared mutable field"
+    detection:
+      - type: semantic
+        description: "Field written from multiple threads without volatile, synchronized, or Atomic wrapper"
+    why: "Java memory model allows threads to cache field values — changes may not be visible"
+    fix: "Use volatile, AtomicReference, synchronized, or concurrent collections"
+    tags: ["concurrency", "visibility"]
+
+  # === WARNING: Spring-Specific ===
+
+  - id: spring_field_injection
+    severity: warning
+    category: maintainability
+    pattern: "@Autowired on field instead of constructor injection"
+    detection:
+      - type: regex
+        value: '@Autowired\s+(?:private|protected|public)\s+'
+        files: ["*.java"]
+    why: "Field injection hides dependencies, prevents immutability, complicates testing"
+    fix: "Use constructor injection — Spring auto-injects single constructor"
+    examples:
+      bad: |
+        @Autowired
+        private UserRepository userRepo;
+      good: |
+        private final UserRepository userRepo;
+        public UserService(UserRepository userRepo) {
+            this.userRepo = userRepo;
+        }
+    tags: ["spring", "dependency-injection"]
+
+  - id: spring_transaction_not_public
+    severity: warning
+    category: correctness
+    pattern: "@Transactional on non-public method"
+    detection:
+      - type: regex
+        value: '@Transactional\s+(?:private|protected)\s+'
+        files: ["*.java"]
+    why: "Spring proxies only intercept public methods — @Transactional on private/protected is silently ignored"
+    fix: "Make transactional methods public, or use AspectJ weaving"
+    tags: ["spring", "transactions"]
+
+  - id: spring_n_plus_one
+    severity: warning
+    category: performance
+    pattern: "JPA lazy loading triggering N+1 queries"
+    detection:
+      - type: semantic
+        description: "Entity relationship with FetchType.LAZY accessed in a loop without @EntityGraph or JOIN FETCH"
+    why: "Each access to a lazy collection fires a separate query"
+    fix: "Use @EntityGraph, JOIN FETCH in JPQL, or batch size configuration"
+    tags: ["jpa", "performance", "n-plus-one"]
+
+  # === WARNING: Kotlin-Specific ===
+
+  - id: kotlin_double_bang
+    severity: warning
+    category: correctness
+    pattern: "!! non-null assertion operator"
+    detection:
+      - type: regex
+        value: '\w+!!'
+        files: ["*.kt"]
+    why: "!! throws KotlinNullPointerException if value is null"
+    fix: "Use safe call ?., elvis ?:, or let/also for null handling"
+    examples:
+      bad: |
+        val name = user!!.name
+      good: |
+        val name = user?.name ?: "unknown"
+    tags: ["kotlin", "null-safety"]
+
+  # === INFO: Best Practices ===
+
+  - id: catching_exception_broadly
+    severity: info
+    category: correctness
+    pattern: "Catching Exception or Throwable broadly"
+    detection:
+      - type: regex
+        value: 'catch\s*\(\s*(?:Exception|Throwable)\s+\w+\s*\)'
+        files: ["*.java", "*.kt"]
+    why: "Catching broadly swallows specific exceptions that need different handling"
+    fix: "Catch specific exceptions, or re-throw unexpected ones"
+    tags: ["error-handling", "specificity"]
+
+  - id: system_out_in_production
+    severity: info
+    category: maintainability
+    pattern: "System.out.println in production code"
+    detection:
+      - type: regex
+        value: 'System\.(?:out|err)\.print'
+        files: ["*.java"]
+    why: "System.out lacks log levels, timestamps, and structured output"
+    fix: "Use SLF4J/Logback with appropriate log levels"
+    tags: ["logging", "observability"]

@@ -1,0 +1,57 @@
+# Capsule Development Workflow - Agent OS + Huxley Integration
+
+name: "capsule-development"
+version: "1.0"
+description: "Complete capsule development workflow with Agent OS + Huxley hybrid capabilities"
+
+steps:
+  - name: "initialization"
+    type: "agent_task"
+    agent: "{{ORCHESTRATOR_NAME_LOWER}}"
+    task: "Initialize capsule development with governance context"
+    context:
+      capsule_path: "${CAPSULE_PATH}"
+      risk_assessment: true
+    
+  - name: "requirements_analysis" 
+    type: "agent_task"
+    agent: "system_architect"
+    task: "Analyze requirements and create technical design"
+    context:
+      builder_patterns: true
+    
+  - name: "implementation"
+    type: "agent_task"
+    agent: "auto_select"
+    task: "Implement solution based on technical design"
+    context:
+      quality_gates: true
+      governance_checkpoints: true
+    
+  - name: "validation"
+    type: "validation" 
+    validation_type: "dod_compliance"
+    target: "${CAPSULE_PATH}"
+    
+  - name: "review"
+    type: "agent_task"
+    agent: "code_reviewer"
+    task: "Review implementation for quality and compliance"
+    context:
+      security_review: true
+    
+  - name: "completion"
+    type: "command"
+    command: "echo 'Capsule development workflow completed'"
+
+governance_checkpoints:
+  - step: "initialization"
+    type: "pre_execution"
+    required_for_risk: ["medium", "high"]
+    
+  - step: "implementation"  
+    type: "mid_execution"
+    
+  - step: "completion"
+    type: "final_validation" 
+    required: true

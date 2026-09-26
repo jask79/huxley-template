@@ -1,0 +1,9 @@
+duckduckgo-search>=8.0.0
+httpx>=0.28.0
+beautifulsoup4>=4.14.0
+pypdf>=6.0.0
+sumy>=0.11
+# Optional providers/LLMs (install when needed)
+# tavily-python>=0.3
+# openai>=1.40
+# anthropic>=0.34

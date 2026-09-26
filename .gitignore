@@ -1,0 +1,121 @@
+# ============================================================================
+# Huxley — .gitignore
+# ============================================================================
+
+# ===== Secrets & credentials (NEVER commit) =====
+# Patterns without a leading slash match at every level, so these also cover
+# capsules/*/.env* and any nested env file. Negations keep templates shareable.
+.env
+.env.*
+*.env
+capsules/*/.env
+capsules/*/.env.*
+!.env.example
+!.env.*.example
+!.env.template
+!.env.sample
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.enc
+.catalyst-config
+.npmrc
+.envrc
+credentials.json
+token.json
+*-token.json
+*service-account*.json
+id_rsa
+id_ed25519
+*.keystore
+*.certSigningRequest
+*.mobileprovision
+/secrets/
+# Personalized registries that setup.sh materializes from the .example stubs
+# (account-recovery maps, domain inventory, brand identity — never commit)
+/global/config/domain-registry.yaml
+/global/config/email-registry.yaml
+/global/config/capsule-registry.yaml
+/global/config/brand-dna.json
+/global/config/persona-panel.json
+
+# ===== Dependencies =====
+node_modules/
+**/.venv/
+**/venv/
+**/.virtualenv/
+.pnpm-store/
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Runtime state & personal data (repo root only) =====
+# Anchored so framework code like tools/memory/ stays tracked.
+# /registry/ is where 20+ shipped tools persist runtime state
+# (pattern DBs, pipeline state, learning logs) — never commit it.
+/memory/
+/logs/
+/tmp/
+/registry/
+*.log
+*.err
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ===== OS junk =====
+.DS_Store
+.DS_Store?
+Thumbs.db
+._*
+
+# ===== Build outputs =====
+dist/
+build/
+out/
+.next/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# ===== Large media (keep binaries out of git) =====
+generated-media/
+*.mp4
+*.mov
+*.mkv
+*.mp3
+*.wav
+*.flac
+*.ipa
+
+# ===== Claude Code local state =====
+.claude/settings.local.json
+.claude/projects/
+.claude/scheduled_tasks.lock
+# Auto-review state: the /auto-review off switch (auto-review-disabled) and the
+# once-per-repo "codex CLI missing" notice marker. Machine-local, never shared.
+.claude/auto-review-*
+
+# ===== Third-party skill trees (installed by setup-skills.sh) =====
+.claude/skills/community/*/
+
+# ===== GitNexus code intelligence index =====
+# Generated locally by `gitnexus analyze` — a large machine-specific graph of
+# your own tree that is rebuilt on demand, never shared.
+.gitnexus/
+
+# ===== Editors =====
+.idea/
+.vscode/
+*.swp

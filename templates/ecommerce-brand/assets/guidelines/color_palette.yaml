@@ -1,0 +1,143 @@
+brand_colors:
+  primary:
+    name: ""
+    hex: ""
+    rgb: [0, 0, 0]
+    cmyk: [0, 0, 0, 0]
+    pantone: ""
+    usage: "Primary brand elements, CTAs, headers"
+    accessibility: "AA compliant with white text"
+  
+  secondary:
+    name: ""
+    hex: ""
+    rgb: [0, 0, 0]
+    cmyk: [0, 0, 0, 0]
+    pantone: ""
+    usage: "Supporting elements, accents, highlights"
+    accessibility: "AA compliant considerations"
+
+neutral_colors:
+  dark:
+    name: "Brand Black"
+    hex: "#1a1a1a"
+    rgb: [26, 26, 26]
+    usage: "Headlines, primary text"
+    
+  medium:
+    name: "Brand Gray"
+    hex: "#666666"
+    rgb: [102, 102, 102]
+    usage: "Secondary text, captions"
+    
+  light:
+    name: "Brand Light Gray"
+    hex: "#f5f5f5"
+    rgb: [245, 245, 245]
+    usage: "Backgrounds, dividers"
+    
+  white:
+    name: "Pure White"
+    hex: "#ffffff"
+    rgb: [255, 255, 255]
+    usage: "Clean backgrounds, contrast"
+
+functional_colors:
+  success:
+    hex: "#10b981"
+    rgb: [16, 185, 129]
+    usage: "Success states, positive metrics"
+    
+  warning:
+    hex: "#f59e0b"
+    rgb: [245, 158, 11]
+    usage: "Warnings, attention needed"
+    
+  error:
+    hex: "#ef4444"
+    rgb: [239, 68, 68]
+    usage: "Errors, critical alerts"
+    
+  info:
+    hex: "#3b82f6"
+    rgb: [59, 130, 246]
+    usage: "Information, links"
+
+color_combinations:
+  high_contrast:
+    background: "#ffffff"
+    text: "#1a1a1a"
+    accent: "" # primary brand color
+    
+  dark_mode:
+    background: "#1a1a1a"
+    text: "#ffffff"
+    accent: "" # primary brand color
+    
+  brand_primary:
+    background: "" # primary brand color
+    text: "#ffffff"
+    accent: "" # secondary brand color
+
+accessibility:
+  aa_compliant_pairs:
+    - background: "#ffffff"
+      text: "#1a1a1a"
+      contrast_ratio: "15.68:1"
+      
+    - background: "" # primary color
+      text: "#ffffff"
+      contrast_ratio: "" # calculate
+      
+  aaa_compliant_pairs:
+    - background: "#ffffff"
+      text: "#1a1a1a"
+      contrast_ratio: "15.68:1"
+
+platform_adaptations:
+  amazon:
+    primary_usage: "Logo, key product highlights"
+    avoid: "Overwhelming color use in listings"
+    
+  shopify:
+    theme_integration: "Header, CTAs, key sections"
+    customization: "Accent colors for sales/promotions"
+    
+  social_media:
+    instagram: "Feed consistency, story highlights"
+    tiktok: "Text overlays, brand elements"
+    facebook: "Cover photo, post graphics"
+
+seasonal_variations:
+  spring:
+    accent_shifts: []
+    temporary_additions: []
+    
+  summer:
+    accent_shifts: []
+    temporary_additions: []
+    
+  fall:
+    accent_shifts: []
+    temporary_additions: []
+    
+  winter:
+    accent_shifts: []
+    temporary_additions: []
+
+usage_guidelines:
+  do:
+    - "Use primary color for main CTAs and brand elements"
+    - "Maintain consistent color relationships across platforms"
+    - "Test accessibility compliance before implementation"
+    
+  dont:
+    - "Use more than 3 colors in a single design element"
+    - "Alter brand color values without approval"
+    - "Use low contrast combinations for important text"
+
+file_exports:
+  adobe_swatches: "brand_colors.ase"
+  css_variables: "brand_colors.css"
+  json_tokens: "brand_colors.json"
+  sketch_palette: "brand_colors.sketchpalette"

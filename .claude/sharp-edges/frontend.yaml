@@ -1,0 +1,319 @@
+# Frontend Developer Sharp Edges
+# Production gotchas for React, Next.js, and web frontend development
+
+edges:
+  # === CRITICAL: Security ===
+
+  - id: xss_dangerously_set_html
+    severity: critical
+    category: security
+    pattern: "Using dangerouslySetInnerHTML with user input"
+    detection:
+      - type: regex
+        value: "dangerouslySetInnerHTML\\s*=\\s*\\{\\s*\\{\\s*__html:\\s*(?!DOMPurify|sanitize)"
+        files: ["*.tsx", "*.jsx"]
+    why: "Unsanitized HTML injection allows XSS attacks"
+    fix: "Use DOMPurify to sanitize HTML, or avoid dangerouslySetInnerHTML entirely"
+    examples:
+      bad: |
+        <div dangerouslySetInnerHTML={{ __html: userComment }} />
+      good: |
+        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userComment) }} />
+    tags: ["owasp-top-10", "xss"]
+
+  - id: eval_user_input
+    severity: critical
+    category: security
+    pattern: "Using eval() or Function() with external data"
+    detection:
+      - type: regex
+        value: "\\beval\\s*\\(|new\\s+Function\\s*\\("
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "eval() with untrusted input enables arbitrary code execution"
+    fix: "Parse JSON with JSON.parse(), use safe alternatives"
+    examples:
+      bad: |
+        const config = eval(configString)
+      good: |
+        const config = JSON.parse(configString)
+    tags: ["injection", "rce"]
+
+  - id: sensitive_data_in_localstorage
+    severity: critical
+    category: security
+    pattern: "Storing sensitive data in localStorage"
+    detection:
+      - type: regex
+        value: "localStorage\\.setItem\\s*\\([^)]*(?:token|password|secret|key|credential)"
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "localStorage is accessible to any script, vulnerable to XSS"
+    fix: "Use httpOnly cookies for tokens, encrypt sensitive local data"
+    examples:
+      bad: |
+        localStorage.setItem('authToken', token)
+      good: |
+        // Use httpOnly cookie set by server instead
+    tags: ["storage", "tokens"]
+
+  # === CRITICAL: React Correctness ===
+
+  - id: missing_key_prop
+    severity: critical
+    category: correctness
+    pattern: "List rendering without key prop"
+    detection:
+      - type: regex
+        value: "\\.map\\s*\\([^)]*\\)\\s*=>\\s*<(?!.*\\bkey\\s*=)"
+        files: ["*.tsx", "*.jsx"]
+    why: "Missing keys cause React reconciliation bugs and performance issues"
+    fix: "Add unique, stable key prop to list items"
+    examples:
+      bad: |
+        items.map(item => <ListItem>{item.name}</ListItem>)
+      good: |
+        items.map(item => <ListItem key={item.id}>{item.name}</ListItem>)
+    tags: ["react", "reconciliation"]
+
+  - id: index_as_key
+    severity: warning
+    category: correctness
+    pattern: "Using array index as React key for dynamic lists"
+    detection:
+      - type: regex
+        value: "\\.map\\s*\\(\\s*\\([^,)]*,\\s*(?:index|i|idx)\\s*\\)[^)]*\\)\\s*=>[^}]*key\\s*=\\s*\\{?\\s*(?:index|i|idx)"
+        files: ["*.tsx", "*.jsx"]
+    why: "Index keys cause bugs when list items can be reordered, added, or removed"
+    fix: "Use unique, stable identifiers from data as keys"
+    examples:
+      bad: |
+        items.map((item, index) => <Item key={index} />)
+      good: |
+        items.map(item => <Item key={item.id} />)
+    tags: ["react", "reconciliation"]
+
+  # === WARNING: Performance ===
+
+  - id: inline_function_in_jsx
+    severity: warning
+    category: performance
+    pattern: "Inline function definition in JSX props"
+    detection:
+      - type: regex
+        value: "on\\w+\\s*=\\s*\\{\\s*\\(\\)\\s*=>"
+        files: ["*.tsx", "*.jsx"]
+    why: "Inline functions create new references on every render, breaking memoization"
+    fix: "Use useCallback or define handler outside JSX"
+    examples:
+      bad: |
+        <Button onClick={() => handleClick(id)} />
+      good: |
+        const handleButtonClick = useCallback(() => handleClick(id), [id])
+        <Button onClick={handleButtonClick} />
+    tags: ["react", "memoization"]
+
+  - id: missing_dependency_array
+    severity: warning
+    category: correctness
+    pattern: "useEffect/useCallback/useMemo without dependency array"
+    detection:
+      - type: regex
+        value: "use(?:Effect|Callback|Memo)\\s*\\([^,]+\\)(?!\\s*,)"
+        files: ["*.tsx", "*.jsx", "*.ts", "*.js"]
+    why: "Missing deps causes infinite loops or stale closures"
+    fix: "Always specify dependency array, even if empty"
+    examples:
+      bad: |
+        useEffect(() => { fetchData() })
+      good: |
+        useEffect(() => { fetchData() }, [])
+    tags: ["react", "hooks"]
+
+  - id: large_bundle_import
+    severity: warning
+    category: performance
+    pattern: "Importing entire library when only part is needed"
+    detection:
+      - type: regex
+        value: "import\\s+(?:_|\\w+)\\s+from\\s+['\"](?:lodash|moment|date-fns)(?!/)['\"]"
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "Full library imports dramatically increase bundle size"
+    fix: "Use specific imports or tree-shakeable alternatives"
+    examples:
+      bad: |
+        import _ from 'lodash'
+        _.debounce(fn, 300)
+      good: |
+        import debounce from 'lodash/debounce'
+        debounce(fn, 300)
+    tags: ["bundle-size", "imports"]
+
+  - id: layout_thrashing
+    severity: warning
+    category: performance
+    pattern: "Reading then writing DOM properties in loop"
+    detection:
+      - type: regex
+        value: "for.*\\{[^}]*(?:offsetHeight|offsetWidth|clientHeight|scrollTop)[^}]*(?:style\\.|classList)"
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "Reading layout properties forces browser reflow, writing triggers repaint"
+    fix: "Batch reads before writes, use requestAnimationFrame"
+    examples:
+      bad: |
+        elements.forEach(el => {
+          const height = el.offsetHeight  // Read
+          el.style.height = height + 10   // Write
+        })
+      good: |
+        const heights = elements.map(el => el.offsetHeight)  // Batch reads
+        elements.forEach((el, i) => el.style.height = heights[i] + 10)  // Batch writes
+    tags: ["dom", "performance"]
+
+  # === WARNING: State Management ===
+
+  - id: state_mutation
+    severity: warning
+    category: correctness
+    pattern: "Direct state mutation instead of immutable update"
+    detection:
+      - type: regex
+        value: "(?:state|props)\\.\\w+\\s*=|\\.push\\s*\\([^)]*\\)(?!.*\\.slice\\(|\\.concat\\(|\\[\\.\\.\\.)"
+        files: ["*.tsx", "*.jsx"]
+    why: "Direct mutation breaks React's change detection"
+    fix: "Use immutable patterns: spread operator, concat, filter"
+    examples:
+      bad: |
+        state.items.push(newItem)
+        setState(state)
+      good: |
+        setState(prev => ({ ...prev, items: [...prev.items, newItem] }))
+    tags: ["react", "immutability"]
+
+  - id: prop_drilling
+    severity: info
+    category: maintainability
+    pattern: "Props passed through multiple component levels"
+    detection:
+      - type: semantic
+        description: "Same prop name appearing in 3+ nested components"
+    why: "Deep prop drilling makes refactoring difficult"
+    fix: "Use Context API, composition, or state management library"
+    tags: ["react", "architecture"]
+
+  # === WARNING: Accessibility ===
+
+  - id: missing_alt_text
+    severity: warning
+    category: accessibility
+    pattern: "Image without alt attribute"
+    detection:
+      - type: regex
+        value: "<img\\s+(?!.*\\balt\\s*=)"
+        files: ["*.tsx", "*.jsx", "*.html"]
+    why: "Images without alt text are inaccessible to screen readers"
+    fix: "Add descriptive alt text, or alt='' for decorative images"
+    examples:
+      bad: |
+        <img src={avatar} />
+      good: |
+        <img src={avatar} alt={`${user.name}'s profile picture`} />
+    tags: ["a11y", "wcag"]
+
+  - id: missing_button_type
+    severity: info
+    category: correctness
+    pattern: "Button without explicit type attribute"
+    detection:
+      - type: regex
+        value: "<button(?![^>]*\\btype\\s*=)"
+        files: ["*.tsx", "*.jsx", "*.html"]
+    why: "Buttons default to type='submit', causing unexpected form submissions"
+    fix: "Always specify type='button' or type='submit'"
+    examples:
+      bad: |
+        <button onClick={handleClick}>Click me</button>
+      good: |
+        <button type="button" onClick={handleClick}>Click me</button>
+    tags: ["forms", "a11y"]
+
+  # === INFO: Best Practices ===
+
+  - id: console_log_in_production
+    severity: info
+    category: maintainability
+    pattern: "console.log statements in production code"
+    detection:
+      - type: regex
+        value: "\\bconsole\\.(?:log|debug|info)\\s*\\("
+        files: ["*.ts", "*.js", "*.tsx", "*.jsx"]
+    why: "Console logs pollute browser console and may leak sensitive data"
+    fix: "Remove before production or use proper logging with log levels"
+    tags: ["debugging", "production"]
+
+  - id: any_type
+    severity: info
+    category: maintainability
+    pattern: "Using 'any' type in TypeScript"
+    detection:
+      - type: regex
+        value: ":\\s*any\\b|as\\s+any\\b|<any>"
+        files: ["*.ts", "*.tsx"]
+    why: "'any' defeats TypeScript's type safety benefits"
+    fix: "Use proper types, unknown, or generics"
+    examples:
+      bad: |
+        function process(data: any) { ... }
+      good: |
+        function process<T extends Record<string, unknown>>(data: T) { ... }
+    tags: ["typescript", "type-safety"]
+
+  # === WARNING: Next.js App Router ===
+
+  - id: use_client_on_page
+    severity: warning
+    category: performance
+    pattern: "'use client' on page-level component"
+    detection:
+      - type: regex
+        value: "^'use client'"
+        files: ["**/app/**/page.tsx", "**/app/**/page.jsx"]
+    why: "Marks entire page as client component, preventing server-side data fetching and streaming"
+    fix: "Push 'use client' to leaf interactive components, keep page.tsx as Server Component"
+    tags: ["nextjs", "rsc", "performance"]
+
+  - id: use_effect_data_fetch
+    severity: warning
+    category: performance
+    pattern: "useEffect for data fetching in Next.js App Router"
+    detection:
+      - type: regex
+        value: "useEffect\\s*\\("
+        files: ["*.tsx", "*.jsx"]
+      - type: semantic
+        description: "useEffect combined with fetch/axios/supabase data fetching in the same component"
+    why: "Creates client-side waterfall, loses streaming/Suspense benefits"
+    fix: "Fetch in Server Components or use Server Actions"
+    tags: ["nextjs", "rsc", "data-fetching"]
+
+  - id: get_session_not_get_user
+    severity: warning
+    category: security
+    pattern: "Using getSession() for auth checks instead of getUser()"
+    detection:
+      - type: regex
+        value: "supabase\\.auth\\.getSession\\(\\)"
+        files: ["*.ts", "*.tsx"]
+    why: "getSession() reads from local storage/cookies without server validation. getUser() validates the JWT."
+    fix: "Use supabase.auth.getUser() for server-side auth checks"
+    tags: ["supabase", "auth", "security"]
+
+  - id: tailwind_v3_config
+    severity: info
+    category: correctness
+    pattern: "Using Tailwind v3 config format in v4 project"
+    detection:
+      - type: regex
+        value: "module\\.exports\\s*=\\s*\\{[^}]*content:"
+        files: ["tailwind.config.*"]
+    why: "Tailwind v4 uses CSS-based @theme config, not tailwind.config.js"
+    fix: "Migrate to @theme block in CSS. See tailwind-v4.md reference."
+    tags: ["tailwind", "migration"]
